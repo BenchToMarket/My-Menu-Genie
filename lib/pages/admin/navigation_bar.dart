@@ -1,9 +1,12 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:menu_genie/pages/save/save_month.dart';
 
 
 import '../menu/menu_create.dart';
+import '../shop/shop_create.dart';
 import '../admin/global_classes.dart';
 
 
@@ -56,7 +59,7 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
         userIDString: '1',
         userServeSize: 2,
       );
-    currStore = CurrentStore(
+    currStore = Store(
         storeID: 1,
         storeName: 'Publix',
       );
@@ -78,8 +81,10 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
 
     _children = [
 
+      // const ShopDate(),
       const MenuCreate(),
-      const MenuCreate(),
+      const ShopCreate(),
+      const SaveMonthly(),
       const MenuCreate(),
       const MenuCreate(),
 
@@ -88,41 +93,60 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
 
   @override
   Widget build(BuildContext context) {
+    my_screenWidth = MediaQuery.of(context).size.width;
+    my_screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
         body: _children[_selectedNav],
         bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Color(0xFFF8B249),
+          backgroundColor:  Color(0xFFe9813f), // Color(0xFFF8B249),  //
           selectedFontSize: 16.0,
           unselectedFontSize: 16.0,
           type: BottomNavigationBarType.fixed,
           items: const <BottomNavigationBarItem>[
             
             BottomNavigationBarItem(
-                  icon: Icon(FontAwesomeIcons.userGroup),
+                  icon: Padding(
+                    padding: EdgeInsets.only(top: 0.0),
+                    // child: Icon(FontAwesomeIcons.userGroup),
+                    child: Icon(Icons.menu),   
+                  ),
                   label: 'Menu',
                 ),
 
             BottomNavigationBarItem(
-                icon: Icon(FontAwesomeIcons.personRunning),
+                // icon: Icon(FontAwesomeIcons.personRunning),
+                icon: Icon(Icons.shopping_cart),   
                 label: 'Shop', 
               ),
 
-            BottomNavigationBarItem(
-                icon: Icon(FontAwesomeIcons.trophy), 
-                label: 'Cook', 
+              BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.dollarSign), 
+                // icon: Icon(FontAwesomeIcons.kitchenSet), 
+                // icon: Icon(Icons.fireplace),   
+                label: 'Save', 
               ),
 
             BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.ellipsis),
+                // icon: Icon(FontAwesomeIcons.fire), 
+                icon: Icon(FontAwesomeIcons.bowlRice), 
+                // icon: Icon(FontAwesomeIcons.kitchenSet), 
+                // icon: Icon(Icons.fireplace),   
+                label: 'Cook', 
+              ),
+
+
+            BottomNavigationBarItem(
+              // icon: Icon(FontAwesomeIcons.ellipsis),
+              icon: Icon(Icons.more_horiz),   
               label: 'More',
             ),
           ],
 
           currentIndex: _selectedNav,
-          selectedItemColor: Colors.green[700], // Color(0xFF3CBC6D),      
+          selectedItemColor:  Colors.green[700], //Colors.green[700], // Color(0xFF3CBC6D),      
           onTap: _onNavigationTapped,
         ),
       ),

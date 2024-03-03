@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
             // ChangeNotifierProvider<Connect>(create: (context) => Connect()),
           ],
         child:  MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.light,
             primary: Color(0xFF3CBC6D),
             onPrimary: Color(0xFF3CBC6D),
-            secondary: Color(0xFFF8B249),
+            secondary:  Color(0xFFe9813f),  // Color(0xFFF8B249),  
             onSecondary: Color(0xFFfce0b6),
             error: Color(0xFFF32424),
             onError: Color(0xFFF32424),
@@ -49,6 +50,13 @@ class MyApp extends StatelessWidget {
           //   headline6: TextStyle(fontSize: 18.0, fontStyle: FontStyle.italic),
           //   bodyText1: TextStyle(fontSize: 16.0, fontFamily: 'Hind'),
           //   bodyText2: TextStyle(fontSize: 12.0, fontFamily: 'Hind'),
+          // ),
+
+          // textTheme: TextTheme(
+          //   headline1: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold),
+          //   headline6: TextStyle(fontSize: 18.0, fontStyle: FontStyle.italic),
+          //   bodyText2: TextStyle(fontSize: 14.0, fontFamily: 'Hind'),
+          //   // bodyText2: TextStyle(fontFamily: 'Hind'),
           // ),
 
         // primarySwatch: Colors.blue,

@@ -1,4 +1,4 @@
-package com.example.my_menu_genie
+package com.example.menu_genie
 
 import io.flutter.embedding.android.FlutterActivity
 
