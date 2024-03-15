@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:convert';
+
 
 import '../admin/global_classes.dart';
 import '../admin/savory_api.dart';
@@ -31,7 +31,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
   bool _sliderLeft = false;
 
   String timeSpan = 'monthly';
-  List<dynamic> saveMonth = [];
+  List<dynamic> saveBySpan = [];
   int _selectedSpan = -1;
 
   @override
@@ -40,7 +40,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
       globals = Provider.of<GlobalVar>(context, listen: false);
       super.initState();
       startFetching();
-      testForOpeningDirection();
+      // testForOpeningDirection();
   }
 
   @override
@@ -53,60 +53,64 @@ class _SaveMonthlyState extends State<SaveMonthly> {
 
     _isLoading = true;
 
-    // saveMonth = await httpSavory.getSavingsSpan(timeSpan, -1);   // -1 for all stores
+    saveBySpan = await httpSavory.getSavingsSpan(timeSpan, "-1");   // -1 for all stores
 
-    // saveMonth = [{"span": "January", "savings": "22.35"}, {"span": "February", "savings": "31.00"}];
 
-    saveMonth = [
-        {
-            "span": "January",
-            "items": "6",
-            "savings": "22.35",
-            "total": "30.15",
-            "bydate": [
-                {
-                    "date": "Jan 20",
-                    "store": "Publix",
-                    "savings": "10.35"
-                },
-                {
-                    "date": "Jan 27",
-                    "store": "Fresh Market",
-                    "savings": "12.35"
-                }
-            ]
-        },
-        {
-            "span": "February",  
-            "items": "10",
-            "savings": "31.00",
-            "total": "50.88",
-            "bydate": [
-                {
-                    "date": "Jan 20",
-                    "store": "Publix",
-                    "savings": "10.35"
-                },
-                {
-                    "date": "Jan 27",
-                    "store": "Fresh Market",
-                    "savings": "12.35"
-                }
-            ]
-        }
-    ];
+    // saveBySpan = [
+    //     {
+    //         "span": "January",
+    //         "items": "6",
+    //         "savings": "22.35",
+    //         "total": "30.15",
+    //         "bydate": [
+    //             {
+    //                 "date": "Jan 20",
+    //                 "store": "Publix",
+    //                 "savings": "10.35"
+    //             },
+    //             {
+    //                 "date": "Jan 27",
+    //                 "store": "Fresh Market",
+    //                 "savings": "12.35"
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "span": "February",  
+    //         "items": "10",
+    //         "savings": "31.00",
+    //         "total": "50.88",
+    //         "bydate": [
+    //             {
+    //                 "date": "Jan 20",
+    //                 "store": "Publix",
+    //                 "savings": "10.35"
+    //             },
+    //             {
+    //                 "date": "Jan 27",
+    //                 "store": "Fresh Market",
+    //                 "savings": "12.35"
+    //             }
+    //         ]
+    //     }
+    // ];
 
-    // saveMonth = [];
+
+    // saveBySpan = [];
+
 
     if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
 
+    testForOpeningDirection();
+
   }
 
   testForOpeningDirection() {
-    if (saveMonth.length == 0) {
+
+    if (saveBySpan.isEmpty) {
       Future.delayed(const Duration(milliseconds: 200), () {
         setState(() { _sliderLeft = true; });
       });
@@ -166,10 +170,10 @@ class _SaveMonthlyState extends State<SaveMonthly> {
                         // scrollDirection: Axis.horizontal,
                         shrinkWrap: true,
                         // separatorBuilder: (_, __) => Divider(height: 12),
-                        itemCount: saveMonth.length,
+                        itemCount: saveBySpan.length,
                         itemBuilder: (context, index) {
                           return SavePanel(
-                            saveSpan: saveMonth[index],
+                            saveSpan: saveBySpan[index],
                             index: index,
                             isSelected: _selectedSpan == index ? true : false,
                             spanChanged: spanSelected,
@@ -195,7 +199,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
                     borderRadius: const BorderRadius.all(Radius.circular(10)) ,
                     border: Border.all(
                       width: 4,
-                      color: const Color(0xFF3CBC6D),
+                      color: blueColor,
                     ),
                   ),                 
                   // color: Colors.blue,
@@ -206,7 +210,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
 
                       const Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text('How it Works?', style: TextStyle(fontSize: 22.0,color: Color(0xFF3CBC6D)),),
+                        child: Text('How it Works?', style: TextStyle(fontSize: 22.0,color: blueColor),),
                       ),
 
                       Expanded(
@@ -218,7 +222,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
                                 Text('1. Create your', style: TextStyle(fontSize: 20.0),),
-                                Text(' Menu', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D)),)
+                                Text(' Menu', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),)
                               ],
                             ),
                             const SizedBox(height: 16.0),
@@ -228,7 +232,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
                                 Text('2.', style: TextStyle(fontSize: 20.0),),
-                                Text(' Shop', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D)),),
+                                Text(' Shop', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
                                 Text(' for Deals', style: TextStyle(fontSize: 20.0),),
                               ],
                             ),
@@ -238,7 +242,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
                                 Text('3.', style: TextStyle(fontSize: 20.0),),
-                                Text(' Save', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D)),),
+                                Text(' Save', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
                                 Text(" \$100's", style: TextStyle(fontSize: 20.0),),
                               ],
                             ),
@@ -252,7 +256,8 @@ class _SaveMonthlyState extends State<SaveMonthly> {
 
                       const Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text('Start Saving from Menu Tab', style: TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
+                        child: Text('Confirm your Shopping to Save', style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.w600, color: Color(0xFFe9813f)),),
+                        // child: Text('Start Saving from Menu Tab', style: TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
                       ),
 
                       // InkWell(child: Padding(
@@ -328,7 +333,7 @@ class _SavePanelState extends State<SavePanel> {
       child: InkWell(
         child: Card(
                       shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Color(0xFF3CBC6D), width: 4.0),
+                        side: BorderSide(color: blueColor, width: 4.0),
                         borderRadius: BorderRadius.circular(10),
                         ),
                       margin: EdgeInsets.only(top: (widget.index == 0 ) ? 10 : 30, right:30, left: 30),
@@ -352,19 +357,25 @@ class _SavePanelState extends State<SavePanel> {
                                   child:  Row(
                                   children: [
                                     Text(bydate.length.toString(), style: TextStyle(color: Colors.black, fontSize: 16.0)),
-                                    Text(' days', style: TextStyle(color: Colors.black, fontSize: 16.0)),
+                                    Text(' trip', style: TextStyle(color: Colors.black, fontSize: 16.0)),
+                                    Text((bydate.length > 1) ?'s' :'', style: TextStyle(color: Colors.black, fontSize: 16.0)),
                                   ],
                                 ),
                                 ),
                                 Row(
                                   children: [
-                                    Text(widget.saveSpan['items'], style: TextStyle(color: Colors.black, fontSize: 16.0)),
+                                    Text(widget.saveSpan['items'].toString(), style: TextStyle(color: Colors.black, fontSize: 16.0)),
                                     Text(' items', style: TextStyle(color: Colors.black, fontSize: 16.0)),
                                   ],
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(right: 12.0),
-                                  child: Text(widget.saveSpan['savings'], style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D), fontSize: 20.0)),
+                                  child: Row(
+                                    children: [
+                                      Text('\$ ', style: TextStyle(fontWeight: FontWeight.w600, color: blueColor, fontSize: 20.0)),
+                                      Text(widget.saveSpan['savings'].toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.w600, color: blueColor, fontSize: 20.0)),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -392,12 +403,12 @@ class _SavePanelState extends State<SavePanel> {
                                           children: [
                                             Text(bydate[index]['date']),
                                             Text(bydate[index]['store']),
-                                            Text(bydate[index]['savings'], style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.0,color: Color(0xFF3CBC6D)),),
+                                            Text(bydate[index]['savings'].toStringAsFixed(2), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.0,color: blueColor),),
                                           ],
                                         ),
                                       );
                                       // return SavePanel(
-                                      //   saveSpan: saveMonth[index],
+                                      //   saveSpan: saveBySpan[index],
                                       //   index: index,
                                       //   isSelected: _selectedSpan == index ? true : false,
                                       //   spanChanged: spanSelected,

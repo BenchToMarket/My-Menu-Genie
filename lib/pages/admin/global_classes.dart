@@ -1,29 +1,50 @@
 
 
 import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
 
+import 'dart:math';
 
 // *******************************************************************************
 // must switch from development to production server
 // *******************************************************************************
 
 //  development server database
-const String API = 'http://10.0.2.2:8000';
+// const String API = 'http://10.0.2.2:8000';
 
 
 // *** Production Server database
-// const String API = 'https://cardiacpeak.net';
+const String API = 'https://cardiacpeak.net';
 
+// **** production - set to false, also comment out loginUser(); in admin_splash_screen
+bool isTest = true;
 
 // const String test_server = 'https://cardiacpeak.net'; //For video - must change when we change ngrok
 
 // late double my_screenWidth;
 // late double my_screenheight;
 late CurrentUser currUser;
-late Store currStore;
+Store? currStore;
   
 late double my_screenWidth;
 late double my_screenHeight;
+int cpAppVersion = -1;    // -1 sent to server means did not fail in getAppVersion, but somewhere else
+
+const headers = {
+  "Content-Type": "application/json"
+}; // , "Connection": "keep-alive"};
+// AWS headers - https://lightsail.aws.amazon.com/ls/docs/en_us/articles/amazon-lightsail-distribution-request-and-response#request-custom-headers-behavior
+
+
+const Color blueColor = Color(0xFF2076AE);
+const Color goldColor = Color(0xFFEAC13B);  //  Color(0xFFFDBB00);  //  Color(0xFFDBCA4C);  //   Color(0xFFffb102);
+
+const Color goldColorLight = Color(0xFFF6E6B0); 
+
+const Color greenColor = Color(0xFF3CBC6D);
+const Color orangeColor = Color(0xFFe9813f);
+
+// iamge for splashscreen: https://otvet.mail.ru/question/214851297
 
 
 class GlobalVar {
@@ -43,6 +64,12 @@ class GlobalVar {
   int shopSubCat = 0;
 
   List<Store> userStores = [];
+
+  bool _isAdmin = false;
+  bool get isAdmin => _isAdmin;
+  void setIsAdmin(bool newValue) {
+    _isAdmin = newValue;
+  }
 
 
   int _MINS_UPDATE_MENU = 5; 
@@ -166,6 +193,18 @@ class GlobalFunctions {
   String toLowerCaseButFirst(String s) =>
       s[0].toUpperCase() + s.substring(1).toLowerCase();
 
+
+  static const chars = "abcdefghjkmnopqrstuvwxyzABCDEFGHJKMNOPQRTUVWXYZ0123456789";
+
+  String RandomString(int strlen) {
+    Random rnd = Random(new DateTime.now().millisecondsSinceEpoch);
+    String result = "";
+    for (var i = 0; i < strlen; i++) {
+      result += chars[rnd.nextInt(chars.length)];
+    }
+    return result;
+  }
+
 }
 
 
@@ -174,12 +213,23 @@ class CurrentUser {
   int userID;
   String userIDString;
   int userServeSize;
+  // List<int> userStores;
   
   CurrentUser(
       {required this.userID,
       required this.userIDString,
       required this.userServeSize,
+      // required this.userStores,
     });
+
+  // Future<CurrentUser> 
+  changeCurrentUser(int id, int servSize, BuildContext context) async {
+    this.userID = id;
+    this.userIDString = id.toString();
+    this.userServeSize = servSize;
+
+  }
+
 
 }
 

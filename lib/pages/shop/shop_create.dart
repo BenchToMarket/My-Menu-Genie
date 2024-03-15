@@ -1,7 +1,6 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:menu_genie/main.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 // import 'dart:async';
@@ -66,21 +65,21 @@ class _ShopCreateState extends State<ShopCreate> {
   // *** should be more global 
   getActiveMenu() {
     
-    print('33333333333333333333333333333333333');
-    // print(globals.menuCommit);
-    // print(globals.shopDate);
+    print('11111111111111111111111111111111111111');
+    print(globals.menuCommit);
+    print(globals.shopDate);
 
     globals.activeMenu = {};
     if (globals.menuCommit.isNotEmpty) {
       for (var mc in globals.menuCommit) {
         // print(mc['date_end_shop']);
         // print(mc['date_end_shop'].runtimeType);
-        if (mc['store_id'] == currStore.storeID && mc['commit_status'] >=0 && DateTime.parse(mc['date_end_shop']).compareTo(DateTime.parse(globals.shopDate)) >= 0) {
+        if (mc['store_id'] == currStore!.storeID && mc['commit_status'] >=0 && DateTime.parse(mc['date_end_shop']).compareTo(DateTime.parse(globals.shopDate)) >= 0) {
           globals.activeMenu = mc;
         }
       }
     }
-    print(globals.activeMenu);
+    // print(globals.activeMenu);
 
     if (globals.activeMenu['commit_status'] == 2) {
       globals.shopThreshMet = true;
@@ -89,6 +88,9 @@ class _ShopCreateState extends State<ShopCreate> {
   }
 
   startFetching() async {
+
+    // print('2222222222222222222222222222222222222');
+    // print(globals.shopDate);
 
     if (globals.shopDate == 'Select') {
       _isDateSelected = false;
@@ -102,8 +104,8 @@ class _ShopCreateState extends State<ShopCreate> {
     // print(globals.activeMenu['id']);
 
     globals.popShoppingList(await httpSavory.getShoppingList(globals.shopDate, globals.activeMenu['id']));
-
-    popStoresShoppingList(currStore.storeID);
+    
+    popStoresShoppingList(currStore!.storeID);
   
 
     // print('111111111111111111111111111111111111');
@@ -167,7 +169,7 @@ class _ShopCreateState extends State<ShopCreate> {
   checkForChanges(int newStatus) async {
     
     if (globals.shopThreshMet == false) {return;}
-    print('----    checking for changes on shopping list---- ');
+    // print('----    checking for changes on shopping list---- ');
 
     // print(globals.changesMadeBuy);
     // print(globals.activeMenu['commit_status']);
@@ -270,7 +272,7 @@ class _ShopCreateState extends State<ShopCreate> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(Icons.shopping_cart, color:  Color(0xFF3CBC6D),),   
+                          const Icon(Icons.shopping_cart, color:  blueColor,),   
                           const Text("My List"),
                           InkWell(
                             child: const Icon(Icons.shopping_cart),
@@ -296,128 +298,199 @@ class _ShopCreateState extends State<ShopCreate> {
                   TabBarView(
                     children: [
                 
-                      // const Center(child: const Text('dont')),
+
+                      (globals.shopDontBuy.isEmpty)
+                        ?
+                          (globals.shopBuy.isEmpty)
+                            ?
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                        // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                        Text('Create Menu First ', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                      ],
+                                  ),
+                                  // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  // Text('Swipe your Menu selections...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  Text('swipe selections in menu tab', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                ],
+                              )
+                            : 
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                        // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                        Text("Not Buying an Item?", style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                      ],
+                                  ),
+                                  // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  Text('swipe here', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                ],
+                              )
+                          : Center(child: ShopList(listTab: 'dont', activeList: globals.shopDontBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify, inactiveTry: activateSlider,)),
                 
-                      Center(child: ShopList(listTab: 'dont', activeList: globals.shopDontBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify, inactiveTry: activateSlider,)),
+
+                      (globals.shopBuy.isEmpty)
+                        ?
+                         (globals.shopDontBuy.isEmpty)
+                            ?
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                        // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                        Text('Create Menu First ', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                      ],
+                                  ),
+                                  // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  // Text('Swipe your Menu selections...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  Text('swipe selections in menu tab', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                ],
+                              )
+                            : 
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                        // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                        Text("Shopping List Empty", style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                      ],
+                                  ),
+                                  // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  Text("swipe items from don't buy", style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                ],
+                              )
+
+                          : Center(child: ShopList(listTab: 'list', activeList: globals.shopBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify, inactiveTry: activateSlider,))
                 
-                      Center(child: ShopList(listTab: 'list', activeList: globals.shopBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify, inactiveTry: activateSlider,))
-                
+                      
                     
                     ],
                   ),
 
 
-
-                  AnimatedPositioned(
-                    top: 100.0,
-                    left: _sliderLeft ? (_sliderMargin / 2) : (my_screenWidth + 80.0),
-                    duration: const Duration(milliseconds: 500),
-                    child: Container(
-                      height: my_screenHeight * .55,
-                      width: my_screenWidth - _sliderMargin,  
-                      decoration: BoxDecoration(
-                        color: Colors.white,    
-                        borderRadius: const BorderRadius.all(Radius.circular(10)) ,
-                        border: Border.all(
-                          width: 4,
-                          color: const Color(0xFF3CBC6D),
-                        ),
-                      ),                 
-                      // color: Colors.blue,
-                    
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
+                  (_isDateSelected == true)
+                    ?
+                        AnimatedPositioned(
+                          top: 100.0,
+                          left: _sliderLeft ? (_sliderMargin / 2) : (my_screenWidth + 80.0),
+                          duration: const Duration(milliseconds: 500),
+                          child: Container(
+                            height: my_screenHeight * .55,
+                            width: my_screenWidth - _sliderMargin,  
+                            decoration: BoxDecoration(
+                              color: Colors.white,    
+                              borderRadius: const BorderRadius.all(Radius.circular(10)) ,
+                              border: Border.all(
+                                width: 4,
+                                color: blueColor,
+                              ),
+                            ),                 
+                            // color: Colors.blue,
+                          
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                (globals.activeMenu['commit_status']) < 4
-                                  ? const Text('Confirm Purchase', style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),)
-                                  : Column(
-                                    children: const [
-                                      Text('Completed Purchase', style: TextStyle(fontSize: 18.0, color: Colors.black),),
-                                      Text("No changes allowed", style: TextStyle(fontSize: 14.0, color: Color(0xFFe9813f)),),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    children: [
+                                      (globals.activeMenu['commit_status']) < 4
+                                        ? const Text('Confirm Purchase', style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),)
+                                        : Column(
+                                          children: const [
+                                            Text('Completed Purchase', style: TextStyle(fontSize: 18.0, color: Colors.black),),
+                                            Text("No changes allowed", style: TextStyle(fontSize: 14.0, color: Color(0xFFe9813f)),),
+                                          ],
+                                        ),
+                                      Column(
+                                        children: [
+                                          const Text('Items'),
+                                          const SizedBox(height: 2.0),
+                                          Text(commitCount.toString(), style: const TextStyle(fontSize: 18.0, color: blueColor),),
+                                        ],
+                                      ),
+                                      Column(
+                                        children: [
+                                          const Text('Savings'),
+                                          const SizedBox(height: 2.0),
+                                          Text('\$ ${commitSavings.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18.0, color: blueColor),),
+                                        ],
+                                      ),
+
+                                      (globals.activeMenu['commit_status']) < 4
+                                        ? 
+                                          Container(
+                                            width: double.infinity,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(left: 50.0, right: 50.0),
+                                              child: ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  primary: blueColor, // background
+                                                  onPrimary: Colors.white, // foreground
+                                                  padding: const EdgeInsets.all(8.0),    
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(6),) 
+                                                ),
+                                                onPressed: () {
+                                                  
+                                                  DateTime dateToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+                                                  globals.activeMenu['commit_status_new'] = 4;
+                                                  globals.activeMenu['date_shopped'] = fx.FormatDate(dateToday.toString());
+                                                  globals.activeMenu['shopped_count'] = commitCount;
+                                                  globals.activeMenu['shopped_total'] = commitTotal;
+                                                  globals.activeMenu['shopped_savings'] = commitSavings;
+                                                  
+                                                  checkForChanges(4);  // this also saves 
+
+                                                  Future.delayed(const Duration(milliseconds: 300), () {
+                                                    setState(() { _sliderLeft = false; });
+                                                  });
+                                                },
+                                                child: const Text('Confirm')),
+                                            ),
+                                          )
+
+                                        : const SizedBox(height: 30.0,)
+
+                                        
+                                
+                                
                                     ],
                                   ),
-                                Column(
-                                  children: [
-                                    const Text('Items'),
-                                    const SizedBox(height: 2.0),
-                                    Text(commitCount.toString(), style: const TextStyle(fontSize: 18.0, color: Color(0xFF3CBC6D)),),
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    const Text('Savings'),
-                                    const SizedBox(height: 2.0),
-                                    Text('\$ ${commitSavings.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18.0, color: Color(0xFF3CBC6D)),),
-                                  ],
                                 ),
 
-                                (globals.activeMenu['commit_status']) < 4
-                                  ? 
-                                    Container(
-                                      width: double.infinity,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(left: 50.0, right: 50.0),
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            primary: const Color(0xFF3CBC6D), // background
-                                            onPrimary: Colors.white, // foreground
-                                            padding: const EdgeInsets.all(8.0),    
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(6),) 
-                                          ),
-                                          onPressed: () {
-                                            
-                                            DateTime dateToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-                                            globals.activeMenu['commit_status_new'] = 4;
-                                            globals.activeMenu['date_shopped'] = fx.FormatDate(dateToday.toString());
-                                            globals.activeMenu['shopped_count'] = commitCount;
-                                            globals.activeMenu['shopped_total'] = commitTotal;
-                                            globals.activeMenu['shopped_savings'] = commitSavings;
-                                            
-                                            checkForChanges(4);  // this also saves 
-
-                                            Future.delayed(const Duration(milliseconds: 300), () {
-                                              setState(() { _sliderLeft = false; });
-                                            });
-                                          },
-                                          child: const Text('Confirm')),
-                                      ),
-                                    )
-
-                                  : const SizedBox(height: 30.0,)
-
-                                  
-                          
-                          
+                                InkWell(child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0, right: 12.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Text((globals.activeMenu['commit_status'] < 4) ? 'Cancel' : 'Got it', style: const TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
+                                    ],
+                                  ),
+                                ),
+                                  onTap: () {
+                                    setState(() {
+                                      _sliderLeft = false;
+                                    });
+                                    },
+                                )
                               ],
-                            ),
+                            )
+
                           ),
-
-                          InkWell(child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0, right: 12.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text((globals.activeMenu['commit_status'] < 4) ? 'Cancel' : 'Got it', style: const TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
-                              ],
-                            ),
-                          ),
-                            onTap: () {
-                              setState(() {
-                                _sliderLeft = false;
-                              });
-                              },
-                          )
-                        ],
-                      )
-
-                    ),
-                  ),
-
+                        )
+                    : Container()
 
               ],
 
@@ -577,7 +650,7 @@ class _ShopListState extends State<ShopList> {
 
     print('------   selected store  -- $index');
 
-    currStore.ChangeStore(globals.userStores[index].storeID, globals.userStores[index].storeName);
+    currStore!.ChangeStore(globals.userStores[index].storeID, globals.userStores[index].storeName);
     setState(() {
       // storeSelected = index;
       globals.shopSubStore = index;
@@ -836,7 +909,7 @@ class _ShopListState extends State<ShopList> {
 
                                     Card(
                                       // shape: RoundedRectangleBorder(
-                                      //   side: BorderSide(color: Color(0xFF3CBC6D), width: 2.0),
+                                      //   side: BorderSide(color: blueColor, width: 2.0),
                                       //   borderRadius: BorderRadius.circular(10),
                                       //   ),
                                       margin: const EdgeInsets.only(right:10, left: 10),
@@ -889,7 +962,7 @@ class _ShopListState extends State<ShopList> {
                                                           crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
                                                             Text(filteredList[index]['item'],
-                                                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D)),),
+                                                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: blueColor),),
 
                                                             (filteredList[index]['cat_main'] != 0)
                                                               ? 
@@ -941,7 +1014,7 @@ class _ShopListState extends State<ShopList> {
                                                         Padding(
                                                           padding: const EdgeInsets.only(right: 60.0),
                                                           child: Text("(${(filteredList[index]['shop_sug'] * (filteredList[index]['option_price'] - filteredList[index]['deal_price'])).toStringAsFixed(2)})",
-                                                              style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D)),),
+                                                              style: const TextStyle(fontWeight: FontWeight.w600, color: blueColor),),
                                                         ),
                                                 ],)
                                               : const SizedBox(width: 30)
@@ -1021,13 +1094,13 @@ class _ShopListState extends State<ShopList> {
                                         child: InkWell(
                                           child: Card(
                                               shape: RoundedRectangleBorder(
-                                                // side: BorderSide(color: Color(0xFF3CBC6D), width: 2.0),
+                                                // side: BorderSide(color: blueColor, width: 2.0),
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                               elevation: 10,
                                               // shadowColor:Color(0xFFe9813f), // Colors.black,
                                               // color: Colors.white,
-                                              color: (filteredList[index]['shop_check']) ? Colors.orange[100] : Colors.white,
+                                              color: (filteredList[index]['shop_check']) ? goldColorLight : Colors.white,   // ? Colors.orange[100] : Colors.white,
                                               // color: (filteredList[index]['dont']) ? Colors.grey[300] : Colors.orange[100],
                                             margin: const EdgeInsets.only(right:30, left: 30),
                                             child: Container(
@@ -1077,8 +1150,8 @@ class _ShopListState extends State<ShopList> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: const [
-                                  Icon(Icons.arrow_left, size: 28, color: Color(0xFF3CBC6D),),                           
-                                  Text(' Select your Menu', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: Color(0xFF3CBC6D))),
+                                  Icon(Icons.arrow_left, size: 28, color: blueColor,),                           
+                                  Text(' Select your Menu', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
                                    ],
                               ),
                               const Text('start with your menu', style: TextStyle(fontSize: 22.0, height: 1.5)),
@@ -1086,7 +1159,7 @@ class _ShopListState extends State<ShopList> {
                           )
                           : Column(
                               children: const [
-                                Text('No Deals Found', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: Color(0xFF3CBC6D))),
+                                Text('No Deals Found', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
                                 Text('check back soon', style: TextStyle(fontSize: 22.0, height: 1.5)),
                               ],
                             )
@@ -1124,7 +1197,7 @@ class StoreSelector extends StatelessWidget {
                       minimumSize: Size.zero, // Set this
                       // padding: EdgeInsets.zero, // and this
                       padding: const EdgeInsets.only(left: 16.0, right: 16.0),    
-                      primary:  (isSelected ?  const Color(0xFF3CBC6D) : Colors.white), // background
+                      primary:  (isSelected ?  blueColor : Colors.white), // background
                       onPrimary: Colors.black, // foreground  
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),) 
@@ -1160,7 +1233,7 @@ class CatSelector extends StatelessWidget {
                       minimumSize: Size.zero, // Set this
                       // padding: EdgeInsets.zero, // and this
                       padding: const EdgeInsets.only(left: 14.0, right: 14.0),    
-                      primary:  (isSelected ?  const Color(0xFFe9813f) : Colors.white), // background
+                      primary:  (isSelected ?  goldColor : Colors.white), // const Color(0xFFe9813f) : Colors.white), // background
                       onPrimary: Colors.black, // foreground  
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),) 
@@ -1198,7 +1271,7 @@ class CatSelector extends StatelessWidget {
 //       child: InkWell(
 //         child: Card(
 //               shape: RoundedRectangleBorder(
-//                 // side: BorderSide(color: Color(0xFF3CBC6D), width: 2.0),
+//                 // side: BorderSide(color: blueColor, width: 2.0),
 //                 borderRadius: BorderRadius.circular(10),
 //               ),
 //               elevation: 10,

@@ -24,7 +24,7 @@ class _ShopDatePickerState extends State<ShopDatePicker> {
   bool _createActive = false;
 
   // late GlobalVar globals;
-  // final HttpService httpSavory = HttpService();
+  final HttpService httpSavory = HttpService();
   final GlobalFunctions fx = GlobalFunctions();  
   late GlobalVar globals;
 
@@ -45,11 +45,27 @@ class _ShopDatePickerState extends State<ShopDatePicker> {
     super.initState();
 
     popDOWfromToday();
-
+    startFetching();
     globals = Provider.of<GlobalVar>(context, listen: false); 
-
   }
 
+
+
+  startFetching() async {
+
+    _isLoading = true;
+
+    // TODO -  
+    // should set to current store - change storeSelected as well 
+    // something like this
+    // for (var s in globals.userStores) {
+    //                         if (s.storeID == widget.startStore) {
+
+    currStore.ChangeStore(1, 'Publix');
+
+    _isLoading = false;
+
+  }
 
 
   popDOWfromToday() {
@@ -94,8 +110,7 @@ class _ShopDatePickerState extends State<ShopDatePicker> {
 
     print('------   selected store  -- $index');
 
-    currStore!.ChangeStore(globals.userStores[index].storeID, globals.userStores[index].storeName);
-
+    currStore.ChangeStore(globals.userStores[index].storeID, globals.userStores[index].storeName);
     setState(() {
       storeSelected = index;
     });
@@ -168,70 +183,40 @@ class _ShopDatePickerState extends State<ShopDatePicker> {
                     ),          
                 ),
 
-                // (selectDateString != '' || widget.startShopDate != 'Select')
-                (selectDateString != '')
-                  ? 
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Container(
-                        height: 42.0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(currStore!.storeName + ": ", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w400)),
-                            Text((dateTodayStr == selectDateString) ? 'Today' : selectDateString, style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w800, color: blueColor)),
-                          ],
-                        ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(currStore.storeName + ": ", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w400)),
+                      Text((dateTodayStr == selectDateString) ? 'Today' : selectDateString, style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w800, color: blueColor)),
+                    ],
+                  ),
+                ),
+              
+                Container(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 100.0, right: 100.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        // primary: (selectedDate == 'Select') ? Colors.grey : blueColor, // background
+                        primary: (selectedDate == 'Select') ? Colors.grey : blueColor, // background
+                        onPrimary: (selectedDate == 'Select') ? Colors.black : Colors.white, // foreground
+                        padding: EdgeInsets.all(8.0),    
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),) 
                       ),
-                    )
-                  : Container(height: 74.0),
-                  
-              // (selectDateString != '' || widget.startShopDate != 'Select')
-              (selectDateString != '')
-                ? 
-                  Container(
-                    width: double.infinity,
-                    height: 38.0,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 100.0, right: 100.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          // primary: (selectedDate == 'Select') ? Colors.grey : blueColor, // background
-                          primary: (selectedDate == 'Select') ? Colors.grey : blueColor, // background
-                          onPrimary: (selectedDate == 'Select') ? Colors.black : Colors.white, // foreground
-                          padding: EdgeInsets.all(8.0),    
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),) 
-                        ),
-                        onPressed: () {
-                          print(_createActive);
-                          (_createActive == true) 
-                            ? {
-                                    // print('1111111111111111111111'),
-                                    // print(widget.startStore),
-                                    // print(currStore!.storeID),
-                                    // if (widget.startStore != currStore!.storeID) {
-                                    //   print('22222222222222222222222'),
-
-                                    //     for (var s in globals.userStores) {
-                                    //       if (s.storeID == currStore!.storeID) {
-                                    //         print('333333333333333333333333333'),
-                                    //         currStore!.ChangeStore(s.storeID, s.storeName),
-                                    //       }
-                                    //     }
-                                    //   },
-                                    // print('odsskcds'),
-
-                                    widget.menuCreatedSelect(selectedDate, widget.startStore == currStore!.storeID),
-                                  }
-                            : null;
-                          _createActive = false;
-                          
-                        },
-                        child: Text((selectedDate == widget.startShopDate && currStore!.storeID == widget.startStore) ? 'Keep Menu' : 'Create Menu')),
-                    ),
-                  )
-                : Container(height: 38.0,)
+                      onPressed: () {
+                        (_createActive == true) 
+                          ? widget.menuCreatedSelect(selectedDate, widget.startStore == currStore.storeID)
+                          : null;
+                        _createActive = false;
+                        
+                      },
+                      child: Text((selectedDate == widget.startShopDate && currStore.storeID == widget.startStore) ? 'Keep Menu' : 'Create Menu')),
+                  ),
+                ),
 
             ],
           ),
@@ -250,10 +235,9 @@ class _ShopDatePickerState extends State<ShopDatePicker> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
               Text("Menu", style: TextStyle(fontFamily: 'Roboto', fontSize: 36.0,fontWeight: FontWeight.w600, color: blueColor),),
-              Text(" ", style: TextStyle(fontFamily: 'Roboto', fontSize: 18.0,fontWeight: FontWeight.w600, color: blueColor),),
+              Text(" ", style: TextStyle(fontFamily: 'Roboto', fontSize: 8.0,fontWeight: FontWeight.w600, color: blueColor),),
               Text("Genie", style: TextStyle(fontFamily: 'Roboto', fontSize: 36.0,fontWeight: FontWeight.w600, color: blueColor),),
-              Text(" ", style: TextStyle(fontFamily: 'Roboto', fontSize: 18.0,fontWeight: FontWeight.w600, color: blueColor),),
-              Text("AI", style: TextStyle(fontFamily: 'Roboto', fontSize: 36.0,fontWeight: FontWeight.w600, color: goldColor),),
+              Text(" AI", style: TextStyle(fontFamily: 'Roboto', fontSize: 36.0,fontWeight: FontWeight.w600, color: Color(0xFFe9813f)),),
             ],
           ),
           // Row(
@@ -295,11 +279,11 @@ class _ShopDatePickerState extends State<ShopDatePicker> {
                         child: Text('Cancel', style: TextStyle(fontSize: 18.0, color: Colors.red),),
                       ),
                       onTap: () {
-                        if (widget.startStore != currStore!.storeID) {
+                        if (widget.startStore != currStore.storeID) {
                           // reset store to initial 
                           for (var s in globals.userStores) {
                             if (s.storeID == widget.startStore) {
-                              currStore!.ChangeStore(s.storeID, s.storeName);
+                              currStore.ChangeStore(s.storeID, s.storeName);
                             }
                           }
                         }
@@ -344,7 +328,7 @@ class StoreSelector extends StatelessWidget {
                       minimumSize: Size.zero, // Set this
                       // padding: EdgeInsets.zero, // and this
                       padding: const EdgeInsets.only(left: 16.0, right: 16.0),    
-                      primary:  (isSelected ? blueColor : Colors.white), // background
+                      primary:  (isSelected ?  blueColor : Colors.white), // background
                       onPrimary: Colors.black, // foreground  
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),) 

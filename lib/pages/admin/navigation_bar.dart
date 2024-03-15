@@ -7,6 +7,8 @@ import 'package:menu_genie/pages/save/save_month.dart';
 
 import '../menu/menu_create.dart';
 import '../shop/shop_create.dart';
+import '../cook/cook_page.dart';
+import '../admin/more_help.dart';
 import '../admin/global_classes.dart';
 
 
@@ -49,24 +51,24 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
   @override
   void initState() {
     super.initState();
-    createCurrentUserTesting();
+    // createCurrentUserTesting();
     popNavBar();
   }
 
-  createCurrentUserTesting() {
-    currUser = CurrentUser(
-        userID: 1,
-        userIDString: '1',
-        userServeSize: 2,
-      );
-    currStore = Store(
-        storeID: 1,
-        storeName: 'Publix',
-      );
+  // createCurrentUserTesting() {
+  //   currUser = CurrentUser(
+  //       userID: 1,
+  //       userIDString: '1',
+  //       userServeSize: 2,
+  //     );
+  //   currStore = Store(
+  //       storeID: 1,
+  //       storeName: 'Publix',
+  //     );
 
-    // my_screenWidth = MediaQuery.of(context).size.width;
-    // my_screenheight = MediaQuery.of(context).size.height;
-  }
+  //   // my_screenWidth = MediaQuery.of(context).size.width;
+  //   // my_screenheight = MediaQuery.of(context).size.height;
+  // }
 
 
 
@@ -85,23 +87,23 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
       const MenuCreate(),
       const ShopCreate(),
       const SaveMonthly(),
-      const MenuCreate(),
-      const MenuCreate(),
+      const CookPage(),
+      const MoreHelp(),
 
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    my_screenWidth = MediaQuery.of(context).size.width;
-    my_screenHeight = MediaQuery.of(context).size.height;
+    // my_screenWidth = MediaQuery.of(context).size.width;
+    // my_screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
         body: _children[_selectedNav],
         bottomNavigationBar: BottomNavigationBar(
-          backgroundColor:  Color(0xFFe9813f), // Color(0xFFF8B249),  //
+          backgroundColor: goldColor,  //  Color.fromARGB(255, 225, 193, 53),   //  Color(0xFFe9813f), //  Color(0xFFe9813f), // Color(0xFFF8B249),  //
           selectedFontSize: 16.0,
           unselectedFontSize: 16.0,
           type: BottomNavigationBarType.fixed,
@@ -146,7 +148,8 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
           ],
 
           currentIndex: _selectedNav,
-          selectedItemColor:  Colors.green[700], //Colors.green[700], // Color(0xFF3CBC6D),      
+          selectedItemColor: blueColor, //  Colors.white, // Colors.greenAccent[400], // Colors.yellow, // Colors.green[900], //Colors.green[700], // blueColor,      
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w800),
           onTap: _onNavigationTapped,
         ),
       ),

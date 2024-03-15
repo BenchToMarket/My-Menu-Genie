@@ -245,7 +245,7 @@ class _ShopCreateState extends State<ShopCreate> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(Icons.shopping_cart, color: Color(0xFF3CBC6D),),   
+                          Icon(Icons.shopping_cart, color: blueColor,),   
                           Text("My List"),
                           InkWell(
                             child: Icon(Icons.shopping_cart),
@@ -671,7 +671,7 @@ class _ShopListState extends State<ShopList> {
 
                                   Card(
                                     // shape: RoundedRectangleBorder(
-                                    //   side: BorderSide(color: Color(0xFF3CBC6D), width: 2.0),
+                                    //   side: BorderSide(color: blueColor, width: 2.0),
                                     //   borderRadius: BorderRadius.circular(10),
                                     //   ),
                                     margin: const EdgeInsets.only(right:10, left: 10),
@@ -719,7 +719,7 @@ class _ShopListState extends State<ShopList> {
                                                         crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
                                                           Text(filteredList[index]['item'],
-                                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D)),),
+                                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: blueColor),),
 
                                                           (filteredList[index]['cat_main'] != 0)
                                                             ? 
@@ -771,7 +771,7 @@ class _ShopListState extends State<ShopList> {
                                                       Padding(
                                                         padding: const EdgeInsets.only(right: 60.0),
                                                         child: Text("(${(filteredList[index]['shop_sug'] * (filteredList[index]['option_price'] - filteredList[index]['deal_price'])).toStringAsFixed(2)})",
-                                                            style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF3CBC6D)),),
+                                                            style: const TextStyle(fontWeight: FontWeight.w600, color: blueColor),),
                                                       ),
                                               ],)
                                             : const SizedBox(width: 30)
@@ -846,7 +846,7 @@ class _ShopListState extends State<ShopList> {
                                       child: InkWell(
                                         child: Card(
                                             shape: RoundedRectangleBorder(
-                                              // side: BorderSide(color: Color(0xFF3CBC6D), width: 2.0),
+                                              // side: BorderSide(color: blueColor, width: 2.0),
                                               borderRadius: BorderRadius.circular(10),
                                             ),
                                             elevation: 10,
@@ -897,8 +897,8 @@ class _ShopListState extends State<ShopList> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
-                                Icon(Icons.arrow_left, size: 28, color: Color(0xFF3CBC6D),),                           
-                                Text(' Select your Menu', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: Color(0xFF3CBC6D))),
+                                Icon(Icons.arrow_left, size: 28, color: blueColor,),                           
+                                Text(' Select your Menu', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
                                  ],
                             ),
                             const Text('start with your menu', style: TextStyle(fontSize: 22.0, height: 1.5)),
@@ -906,7 +906,7 @@ class _ShopListState extends State<ShopList> {
                         )
                         : Column(
                             children: const [
-                              Text('No Deals Found', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: Color(0xFF3CBC6D))),
+                              Text('No Deals Found', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
                               Text('check back soon', style: TextStyle(fontSize: 22.0, height: 1.5)),
                             ],
                           )
@@ -943,7 +943,7 @@ class StoreSelector extends StatelessWidget {
                       minimumSize: Size.zero, // Set this
                       // padding: EdgeInsets.zero, // and this
                       padding: const EdgeInsets.only(left: 16.0, right: 16.0),    
-                      primary:  (isSelected ?  const Color(0xFF3CBC6D) : Colors.white), // background
+                      primary:  (isSelected ?  blueColor : Colors.white), // background
                       onPrimary: Colors.black, // foreground  
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),) 
@@ -1017,7 +1017,7 @@ class CatSelector extends StatelessWidget {
 //       child: InkWell(
 //         child: Card(
 //               shape: RoundedRectangleBorder(
-//                 // side: BorderSide(color: Color(0xFF3CBC6D), width: 2.0),
+//                 // side: BorderSide(color: blueColor, width: 2.0),
 //                 borderRadius: BorderRadius.circular(10),
 //               ),
 //               elevation: 10,

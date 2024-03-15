@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'pages/admin/navigation_bar.dart';
+// import 'pages/admin/navigation_bar.dart';
 import 'pages/admin/global_classes.dart';
-// import 'pages/admin/savory_api.dart';
-// import 'pages/menu/menu_create.dart';
+import 'pages/admin/splash_screen.dart';
 
 
 void main() {
@@ -32,17 +31,26 @@ class MyApp extends StatelessWidget {
         // colorScheme: const ColorScheme(brightness: brightness, primary: primary, onPrimary: onPrimary, secondary: secondary, onSecondary: onSecondary, error: error, onError: onError, background: background, onBackground: onBackground, surface: surface, onSurface: onSurface),
         colorScheme: const ColorScheme(
             brightness: Brightness.light,
-            primary: Color(0xFF3CBC6D),
-            onPrimary: Color(0xFF3CBC6D),
-            secondary:  Color(0xFFe9813f),  // Color(0xFFF8B249),  
+            primary: blueColor, 
+            onPrimary: blueColor,
+            secondary: goldColor,  // Color(0xFFffb102), // Color(0xFFe9813f),  // Color(0xFFF8B249),  
             onSecondary: Color(0xFFfce0b6),
             error: Color(0xFFF32424),
             onError: Color(0xFFF32424),
             background: Color(0xFFFEFEFE),          // background: Color(0xFFF1F2F3),
             onBackground: Color(0xFFFFFFFF),
-            surface: Color(0xFF54B435),     // can change 
-            onSurface: Color(0xFF54B435),
+            surface: blueColor,     // can change 
+            onSurface: blueColor,
           ),
+          
+
+          // // green & oragne colors:
+          // Color(0xFF3CBC6D-),
+          // Color(0xFFe9813f-),
+
+          // // blue and gold 
+          // Color(0xFF2076AE-),
+          // Color(0xFFffb102-),
 
           // from Cardiac Peak - custom for Savory
           // textTheme: const TextTheme(
@@ -72,7 +80,8 @@ class MyApp extends StatelessWidget {
 
       ),
 
-      home: const MyBottomNavigationBar(),
+      home: SplashScreen(),
+      // home: const MyBottomNavigationBar(),
     ),
     );
   }
