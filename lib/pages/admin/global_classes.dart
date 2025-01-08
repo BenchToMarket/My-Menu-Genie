@@ -2,6 +2,7 @@
 
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:math';
 
@@ -10,11 +11,18 @@ import 'dart:math';
 // *******************************************************************************
 
 //  development server database
-// const String API = 'http://10.0.2.2:8000';
+const String API = 'http://10.0.2.2:8000';
 
 
 // *** Production Server database
-const String API = 'https://cardiacpeak.net';
+// const String API = 'https://cardiacpeak.net';
+
+
+// test on actual device
+// const String API = 'http://192.168.1.64:8000';   # check my ipconfig - wireless LAN Adapter
+// const String API = 'http://192.168.1.99:8000';
+// need to run server with: python manage.py runserver 0.0.0.0:8000
+
 
 // **** production - set to false, also comment out loginUser(); in admin_splash_screen
 bool isTest = true;
@@ -28,6 +36,7 @@ Store? currStore;
   
 late double my_screenWidth;
 late double my_screenHeight;
+late double my_screenDisplay;
 int cpAppVersion = -1;    // -1 sent to server means did not fail in getAppVersion, but somewhere else
 
 const headers = {
@@ -50,12 +59,28 @@ const Color orangeColor = Color(0xFFe9813f);
 class GlobalVar {
 
 
+  String menuDate = 'Select';     // this is the date that marks - NO Date Picked
   String shopDate = 'Select';     // this is the date that marks - NO Date Picked
+
+  // this is the new way to track changes, we dont have to fetch menu unless changes
   bool changesMadeMenu = false;
   bool changesMadeBuy = false;
+  bool changesMadeMenuToCook = false;
   // bool changesMadeVerify = false;
+  bool creatingMenu = false;
   bool shopThreshMet = false;
+  bool shoppingListPopulated = false;
 
+  // use both together (with dateShopCommmit) to show committed shopping for 60 minutes
+  bool changedMenuCommit = true;
+  int lastMenuWeShow = 4;   
+
+  // updated is for items like defaults, not item changes
+  bool updatedStores = true;  // when startup we will need to reload data 
+  bool updatedServings = true;
+
+
+  bool isSaving = false;
 
   int menuActiveTab = 1;
   int shopActiveTab = 1;
@@ -71,21 +96,42 @@ class GlobalVar {
     _isAdmin = newValue;
   }
 
+ 
 
-  int _MINS_UPDATE_MENU = 5; 
+  // int _MINS_UPDATE_STORE = 60; 
+  // DateTime _dateUpdatedStore = DateTime(1976, 1, 1);
+  
+  // int get MINS_UPDATE_STORE => _MINS_UPDATE_STORE;
+  // DateTime get dateUpdatedStore => _dateUpdatedStore;
+
+  int _MINS_UPDATE_MENU = 60; // = 2; // = 60; 
   DateTime _dateUpdatedMenu = DateTime(1976, 1, 1);
   
   int get MINS_UPDATE_MENU => _MINS_UPDATE_MENU;
   DateTime get dateUpdatedMenu => _dateUpdatedMenu;
 
-  int _MINS_UPDATE_SHOP = 5; 
+  int _MINS_UPDATE_SHOP = 60; //  = 2; // = 60; 
   DateTime _dateUpdatedShop = DateTime(1976, 1, 1);
   
   int get MINS_UPDATE_SHOP => _MINS_UPDATE_SHOP;
   DateTime get dateUpdatedShop => _dateUpdatedShop;
 
+  int _MINS_SHOP_COMMIT = 2; // = 60; 
+  DateTime _dateShopCommit = DateTime(1976, 1, 1);    // when re-start - will not show committed menu 
+  
+  int get MINS_SHOP_COMMIT => _MINS_SHOP_COMMIT;
+  DateTime get dateShopCommit => _dateShopCommit;
+ 
+  int _MINS_UPDATE_COOK = 60; //  = 2; // = 60; 
+  DateTime _dateUpdatedCook = DateTime(1976, 1, 1);
+  
+  int get MINS_UPDATE_COOK => _MINS_UPDATE_COOK;
+  DateTime get dateUpdatedCook => _dateUpdatedCook;
+
+
   List<dynamic> menuCommit = [];
   Map<String, dynamic> activeMenu = {};
+  Map<String, dynamic> activeShop = {};
 
   List<dynamic> _menuAll = [];
 
@@ -105,6 +151,10 @@ class GlobalVar {
     _dateUpdatedMenu = updated;
   }
 
+  // void updatedStore(DateTime updated) {
+  //   _dateUpdatedStore = updated;
+  // }
+
   
   List<dynamic> _shoppingList = [];
   List<dynamic> get shoppingList => _shoppingList;
@@ -121,6 +171,9 @@ class GlobalVar {
   List<dynamic> shopVerifyAll = [];
   List<dynamic> shopVerify = [];
   List<dynamic> shopDontVerify = [];
+
+
+  List<dynamic> cookingList = [];
   
   // List<dynamic> get shopAll => _shopAll;
   
@@ -131,7 +184,13 @@ class GlobalVar {
   //   _dateUpdatedShop = updated;
   // }
 
+  void updatedShopCommit(DateTime updated) {
+    _dateShopCommit= updated;
+  }
 
+  void updatedCook(DateTime updated) {
+    _dateUpdatedCook= updated;
+  }
 
 
   // Map<String, dynamic> _shoppingList = {};
@@ -205,6 +264,15 @@ class GlobalFunctions {
     return result;
   }
 
+  seenInfoSet(int pos, String value) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    currUser.seenInfo = currUser.seenInfo.replaceRange(pos, pos+1, value);
+    prefs.setString('seenInfo', currUser.seenInfo);
+
+  }
+
 }
 
 
@@ -214,20 +282,31 @@ class CurrentUser {
   String userIDString;
   int userServeSize;
   // List<int> userStores;
+  int userPlan;
+
+  String seenInfo;
   
   CurrentUser(
       {required this.userID,
       required this.userIDString,
       required this.userServeSize,
       // required this.userStores,
+      required this.userPlan,
+      required this.seenInfo,
     });
 
   // Future<CurrentUser> 
-  changeCurrentUser(int id, int servSize, BuildContext context) async {
-    this.userID = id;
-    this.userIDString = id.toString();
-    this.userServeSize = servSize;
-
+  changeCurrentUser(String whatChange, int id, int servSize, BuildContext context) async {
+    // this.userID = id;
+    // this.userIDString = id.toString();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    
+    if (whatChange == 'serving') {
+      this.userServeSize = servSize;
+      prefs.setInt("userServeSize",servSize);
+    }
+    
+    
   }
 
 

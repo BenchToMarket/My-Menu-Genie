@@ -7,6 +7,7 @@ import 'dart:convert';
 
 import '../admin/global_classes.dart';
 import '../admin/savory_api.dart';
+import '../admin/more_help.dart';
 
 
 ///
@@ -34,8 +35,9 @@ class _ShopCreateState extends State<ShopCreate> {
 
   // int initialCommitStatus = 0;    // 0-no shop list, 1-list setup, 2-list commit, 4-list-purchased
 
-  final double _sliderMargin = 160.0;
-  bool _sliderLeft = false;
+  final double _sliderMargin = 60.0;
+  bool _sliderLeftCompleteBuy = false;
+  bool _sliderLeftShopLock = false;
 
   int commitCount = 0;
   double commitSavings = 0.0;
@@ -47,14 +49,33 @@ class _ShopCreateState extends State<ShopCreate> {
     globals = Provider.of<GlobalVar>(context, listen: false);
 
     super.initState();
-    getActiveMenu();
+    getactiveShop();
     startFetching();
     // startChangeTimer();
+
   }
 
   @override
   void dispose() {
-    checkForChanges(globals.activeMenu['commit_status']);
+
+    print('---   disposing   shopping  ---');
+    // print(globals.activeShop);
+    
+    // moved to Nav Bar
+    // if (globals.activeShop.isNotEmpty) {
+    //   if (globals.shopThreshMet == true) {
+    //     if (globals.activeShop['commit_status'] > 2) {
+    //       // 2 - started shopping, but if they have already passed this, we default to current
+    //       checkForChanges(globals.activeShop['commit_status']);
+    //     } else{ 
+    //       checkForChanges(2);
+    //     }
+
+    //   } else {
+    //     checkForChanges(globals.activeShop['commit_status']);
+    //   }
+    // }
+    
     // if (timer != null) {
     //   timer.cancel();
     // }
@@ -63,25 +84,34 @@ class _ShopCreateState extends State<ShopCreate> {
 
   
   // *** should be more global 
-  getActiveMenu() {
+  getactiveShop() {
     
-    print('11111111111111111111111111111111111111');
-    print(globals.menuCommit);
-    print(globals.shopDate);
+    // print('2222222222222222222222222222222');
+    // print(globals.menuCommit);
+    // print(globals.shopDate);
 
-    globals.activeMenu = {};
+    globals.activeShop = {};
+    globals.shopDate = 'Select';
+
     if (globals.menuCommit.isNotEmpty) {
       for (var mc in globals.menuCommit) {
+        // print(mc);
         // print(mc['date_end_shop']);
         // print(mc['date_end_shop'].runtimeType);
-        if (mc['store_id'] == currStore!.storeID && mc['commit_status'] >=0 && DateTime.parse(mc['date_end_shop']).compareTo(DateTime.parse(globals.shopDate)) >= 0) {
-          globals.activeMenu = mc;
+        if (mc['store_id'] == currStore!.storeID && mc['commit_status'] >=0 && mc['commit_status'] < 4) {
+          globals.activeShop = mc;
+          globals.shopDate = mc['date_shop'];
+          // if (DateTime.parse(mc['date_end_shop']).compareTo(DateTime.parse(globals.shopDate)) >= 0) {
+          //   globals.activeShop = mc;
+          // }
         }
       }
     }
-    // print(globals.activeMenu);
+    // print('33333333333333333333333333333333333');
+    // print(globals.activeShop);
+    // print(globals.shopDate);
 
-    if (globals.activeMenu['commit_status'] == 2) {
+    if (globals.activeShop['commit_status'] == 2) {
       globals.shopThreshMet = true;
     }
 
@@ -89,38 +119,39 @@ class _ShopCreateState extends State<ShopCreate> {
 
   startFetching() async {
 
-    // print('2222222222222222222222222222222222222');
-    // print(globals.shopDate);
-
     if (globals.shopDate == 'Select') {
       _isDateSelected = false;
+      return;
+    }
+    // not right - but we need a menu or cant start shopping - so right now, if no menu, no date selects
+    if (globals.activeShop['id'] == null) {
+      _isDateSelected = false; 
       return;
     }
 
     _isLoading = true;
 
-    // print('0000000000000000000000000000000000000000000000000');
-    // print(globals.shopDate);
-    // print(globals.activeMenu['id']);
-
-    globals.popShoppingList(await httpSavory.getShoppingList(globals.shopDate, globals.activeMenu['id']));
+    globals.popShoppingList(await httpSavory.getShoppingList(globals.shopDate, globals.activeShop['id']));
     
     popStoresShoppingList(currStore!.storeID);
-  
 
-    // print('111111111111111111111111111111111111');
+    if (globals.shopBuy.length + globals.shopVerify.length > 0) {
+      globals.shopActiveTab = 1;
+    }
+  
 
     // testing -- globals.shopBuy = globals.shopBuy + globals.shopBuy + globals.shopBuy;
 
-    // // print('--------------------------------');
-    // // for (var l in globals.shoppingList) {
-    // //   print(l);
-    // // }
+    // print('--------------------------------');
+    // for (var l in globals.shoppingList) {
+    //   print(l);
+    // }
 
     // // print(globals.shoppingList);
     // print('-------------------  shop buy  -------------');
     // for (var p in globals.shopBuy) {
     //   print(p);
+    //   print('---------------------------------------------------');
     // }
     // print('-------------   dont buy  -------------------');
     // for (var p in globals.shopDontBuy) {
@@ -139,6 +170,7 @@ class _ShopCreateState extends State<ShopCreate> {
 
   }
 
+  // want to move to help - but it does not like using context - duplicated in Menu & Shop
   popStoresShoppingList(int storeID) {
 
     globals.shopBuyAll.clear();
@@ -149,95 +181,168 @@ class _ShopCreateState extends State<ShopCreate> {
     globals.shopDontVerify.clear();
     globals.shopCategory.clear();
 
+    // print('*****************************************');
+
     for (var l in globals.shoppingList) {
       if (l['store_id'] == storeID) {
+          // print(l['shopping_list']);
+          // print('-------------------------------------------');
           globals.shopBuyAll = l['shopping_list']['purchase'];
           globals.shopVerifyAll = l['shopping_list']['verify'];
           globals.shopBuy = l['shopping_list']['purchase'].where((item) => item['shop_accept'] == 1).toList();
           globals.shopDontBuy = l['shopping_list']['purchase'].where((item) => item['shop_accept'] == -1).toList();
-          globals.shopVerify = l['shopping_list']['verify'].where((item) => item['dont'] == false).toList();
-          globals.shopDontVerify = l['shopping_list']['verify'].where((item) => item['dont'] == true).toList();
+          globals.shopVerify = l['shopping_list']['verify'].where((item) => (item['dont'] == 'keep' || item['dont'] == 'want')).toList();
+          globals.shopDontVerify = l['shopping_list']['verify'].where((item) => item['dont'] == 'dont').toList();
+          // globals.shopVerify = l['shopping_list']['verify'].where((item) => item['dont'] == false).toList();
+          // globals.shopDontVerify = l['shopping_list']['verify'].where((item) => item['dont'] == true).toList();
           globals.shopCategory = l['shopping_list']['shop_cat'];
       }
     }
     globals.shopCategory.insert(0, "Verify");
     globals.shopCategory.insert(0, "All");
 
+    // print('44444444444444444444444444444444');
+    // print(globals.shopVerifyAll);
+    // print('-------------------------------------------');
+    // print(globals.shopVerify);
+
   }
 
 
-  checkForChanges(int newStatus) async {
+  // // keeping for completing purcahse - menu_commit = 4
+  // checkForChanges(int newStatus) async {
+
+  //   // print('111111111111111111');
+  //   // print(globals.shopThreshMet);
     
-    if (globals.shopThreshMet == false) {return;}
-    // print('----    checking for changes on shopping list---- ');
+  //   if (globals.shopThreshMet == false) {return;}
+  //   print('----    checking for changes on shopping list---- new status:  ' + newStatus.toString());
 
-    // print(globals.changesMadeBuy);
-    // print(globals.activeMenu['commit_status']);
-    for (var mc in globals.menuCommit) {
-      // print(mc);
-      if (mc['id'] == globals.activeMenu['id']) {
-        if (mc['commit_status_new'] < newStatus) {
-          mc['commit_status_new'] = newStatus;
-        }
-      }
-    }
-    // print('-------------------  shop buy  ALL -------------');
-    // for (var p in globals.shopBuyAll) {
-    //   print(p);
-    // }
+  //   // print(globals.changesMadeBuy);
+  //   // print(globals.activeShop['commit_status']);
+  //   for (var mc in globals.menuCommit) {
+  //     // print(mc);
+  //     if (mc['id'] == globals.activeShop['id']) {
+  //       if (mc['commit_status_new'] < newStatus) {
+  //         mc['commit_status_new'] = newStatus;
+  //       }
+  //     }
+  //   }
+  //   // print('-------------------  shop buy  ALL -------------');
+  //   // for (var p in globals.shopBuyAll) {
+  //   //   print(p);
+  //   // }
 
-    Map<String, dynamic> shopMap = {'menu': globals.activeMenu, 'buy': globals.shopBuyAll, 'verify': globals.shopVerifyAll};
+  //   Map<String, dynamic> shopMap = {'menu': globals.activeShop, 'buy': globals.shopBuyAll, 'verify': globals.shopVerifyAll};
 
-    final jsonChanged = json.encode(shopMap);
+  //   final jsonChanged = json.encode(shopMap);
 
-    bool success = await httpSavory.sendShopUpdates(jsonChanged);
+  //   // print(jsonChanged);
 
-    // *** do we need to change in global menu list - or just active
-    if (globals.activeMenu['commit_status'] < newStatus) {
-        // *** we only do like this IF we are creating a shopping list, if we have do something else
-        if (success == true) {
-          globals.activeMenu['commit_status'] = newStatus;
-          // for (var mc in globals.menuCommit) {
-          //   if (mc['id'] == globals.activeMenu['id']) {
-          //     if (mc['commit_status'] < 2) {
-          //       mc['commit_status_new'] = 2;
-          //     }
-          //     print('  -----     our active menu commit  ------');
-          //   }
-          // }
-        }
-    }
+  //   bool success = await httpSavory.sendShopUpdates(jsonChanged);
 
-  }
+  //   // *** do we need to change in global menu list - or just active
+  //   if (globals.activeShop['commit_status'] < newStatus) {
+  //       // *** we only do like this IF we are creating a shopping list, if we have do something else
+  //       if (success == true) {
+  //         globals.activeShop['commit_status'] = newStatus;
+  //         // for (var mc in globals.menuCommit) {
+  //         //   if (mc['id'] == globals.activeShop['id']) {
+  //         //     if (mc['commit_status'] < 2) {
+  //         //       mc['commit_status_new'] = 2;
+  //         //     }
+  //         //     print('  -----     our active menu commit  ------');
+  //         //   }
+  //         // }
+  //       }
+  //   }
+
+  // }
 
   // commitShopping() {
   //   // need to update in 3 places:
-  //   // activeMenu, menuCommitList and maybe db (can do later when saving other changes)
-  //   globals.activeMenu['commit_status_new'] = 2;
+  //   // activeShop, menuCommitList and maybe db (can do later when saving other changes)
+  //   globals.activeShop['commit_status_new'] = 2;
   //   for (var mc in globals.menuCommit) {
   //     // print(mc);
-  //     if (mc['id'] == globals.activeMenu['id']) {
+  //     if (mc['id'] == globals.activeShop['id']) {
   //       mc['commit_status'] = 2;
   //     }
   //   }
   // }
 
-  getCommitNumbers() {
-    commitCount = 0;
-    commitSavings = 0.0;
-    commitTotal = 0.0;
-    for (var row in globals.shopBuy) {
-      if (row['shop_check'] == true) {
-        commitCount += 1;
-        commitSavings += (row['shop_sug'] * (row['option_price'] - row['deal_price']));
-        commitTotal += (row['shop_sug'] * row['option_price']);
-      }
+  // getCommitNumbers() {
+  //   commitCount = 0;
+  //   commitSavings = 0.0;
+  //   commitTotal = 0.0;
+  //   for (var row in globals.shopBuy) {
+  //     if (row['shop_check'] == true) {
+  //       commitCount += 1;
+  //       commitSavings += (row['shop_sug'] * (row['option_price'] - row['deal_price']));
+  //       commitTotal += (row['shop_sug'] * row['option_price']);
+  //     }
+  //   }
+  // }
+
+  activateSlider() {
+    setState(() { _sliderLeftCompleteBuy = true; });
+  }
+
+  sliderMakeFirstBuy() {
+
+      Future.delayed(const Duration(seconds: 1), () {
+        // print(mounted);
+        if (!mounted) return;
+        setState(() { _sliderLeftShopLock = true; });
+      });
+
+      
+  }
+
+  hideSlider(bool dontShowAgain, int showInx) {
+    
+    setState(() { _sliderLeftShopLock = false; });
+
+    // print('-- in hide slider ---');
+    // print(dontShowAgain);
+
+    if (dontShowAgain == true) {
+      final GlobalFunctions fx = GlobalFunctions();
+      fx.seenInfoSet(showInx, '0');
     }
   }
 
-  activateSlider() {
-    setState(() { _sliderLeft = true; });
+  // this is commit shopping
+  startShopAndLock(bool dontShowAgain, int showInx) {
+    globals.shopThreshMet = true;
+    globals.updatedShopCommit(DateTime.now());
+
+    // print('---  in shop and lock -----');
+    // print(globals.shopThreshMet);
+
+    setState(() { _sliderLeftShopLock = false; });
+    
+    if (dontShowAgain == true) {
+      final GlobalFunctions fx = GlobalFunctions();
+      fx.seenInfoSet(showInx, '0');
+    }
   }
+
+  // these 2 are for shopping commit or cancel
+  shopConfirmComplete() {
+      checkForChanges(4, context);  // this also saves 
+
+      Future.delayed(const Duration(milliseconds: 300), () {
+        setState(() { _sliderLeftCompleteBuy = false; });
+      });
+  }
+
+  shopCancelComplete() {
+    setState(() {
+      _sliderLeftCompleteBuy = false;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -275,15 +380,17 @@ class _ShopCreateState extends State<ShopCreate> {
                           const Icon(Icons.shopping_cart, color:  blueColor,),   
                           const Text("My List"),
                           InkWell(
-                            child: const Icon(Icons.shopping_cart),
+                            child: Icon(Icons.shopping_cart, color: (globals.shopThreshMet == true ? Colors.white : blueColor)),
                             onTap: () {
-                              getCommitNumbers();
-                              setState(() {
-                                _sliderLeft = true;
-                              });
+                              // getCommitNumbers();
+                              if (globals.shopThreshMet == true) {
+                                setState(() {
+                                  _sliderLeftCompleteBuy = true;
+                                });                          
+                              }
+
                             },
-  
-                            ),                 
+                          ),                 
                         ],
                       )
                     ),
@@ -303,21 +410,61 @@ class _ShopCreateState extends State<ShopCreate> {
                         ?
                           (globals.shopBuy.isEmpty)
                             ?
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
+                              (globals.menuAll.isEmpty)
+                                ?
+                                  Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                        // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
-                                        Text('Create Menu First ', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
-                                      ],
-                                  ),
-                                  // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                  // Text('Swipe your Menu selections...', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                  Text('swipe selections in menu tab', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                ],
-                              )
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                            // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                            Text('Create Menu First ', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                          ],
+                                      ),
+                                      // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                      // Text('Swipe your Menu selections...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                      // Text('swipe selections in menu tab', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                      const SizedBox(height: 16.0),
+                                      // Text('from Menu nav bar', style: TextStyle(fontSize: 22.0, height: 1.3)),
+                                      const Text('go to Menu', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Text('swipe recipes right ', style: TextStyle(fontSize: 22.0, height: 1.3,fontWeight: FontWeight.w500, color: blueColor)),
+                                          Text('to menu tab', style: TextStyle(fontSize: 22.0, height: 1.3)),
+                                        ],
+                                      ),
+                                      // const Text('(from Menu nav bar)', style: const TextStyle(fontSize: 18.0, height: 1.3)),
+                                    ],
+                                  )
+                                :  // user created menu - but did not slide Choices
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                            // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                            Text('Swipe your Choices', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                          ],
+                                      ),
+                                      const SizedBox(height: 16.0),
+                                      const Text('go to Menu', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Text('swipe recipes right ', style: TextStyle(fontSize: 22.0, height: 1.3,fontWeight: FontWeight.w500, color: blueColor)),
+                                          Text('to select', style: TextStyle(fontSize: 22.0, height: 1.3)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 32.0),
+                                      const Text('new users:', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                      const Text('start with 1 recipe', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                    ],
+                                  )
+
+                                
                             : 
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -330,31 +477,71 @@ class _ShopCreateState extends State<ShopCreate> {
                                       ],
                                   ),
                                   // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                  Text('swipe here', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  const Text('swipe here', style: const TextStyle(fontSize: 22.0, height: 1.5)),
                                 ],
                               )
-                          : Center(child: ShopList(listTab: 'dont', activeList: globals.shopDontBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify, inactiveTry: activateSlider,)),
+                          : Center(child: ShopList(listTab: 'dont', activeList: globals.shopDontBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify,firstItemSelect: sliderMakeFirstBuy, inactiveTry: activateSlider,)),
                 
 
                       (globals.shopBuy.isEmpty)
                         ?
                          (globals.shopDontBuy.isEmpty)
                             ?
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
+                              (globals.menuAll.isEmpty)
+                                ?
+                                  Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                        // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
-                                        Text('Create Menu First ', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
-                                      ],
-                                  ),
-                                  // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                  // Text('Swipe your Menu selections...', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                  Text('swipe selections in menu tab', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                ],
-                              )
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                            // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                            Text('Create Menu First ', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                          ],
+                                      ),
+                                      // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                      // Text('Swipe your Menu selections...', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                      // Text('swipe selections in menu tab', style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                      const SizedBox(height: 16.0),
+                                      // Text('from Menu nav bar', style: TextStyle(fontSize: 22.0, height: 1.3)),
+                                      const Text('go to Menu', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Text('swipe recipes right ', style: TextStyle(fontSize: 22.0, height: 1.3,fontWeight: FontWeight.w500, color: blueColor)),
+                                          Text('to menu tab', style: TextStyle(fontSize: 22.0, height: 1.3)),
+                                        ],
+                                      ),
+                                      // const Text('(from Menu nav bar)', style: const TextStyle(fontSize: 18.0, height: 1.3)),
+                                    ],
+                                  )
+                                :  // user created menu - but did not slide Choices
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                            // Icon(Icons.arrow_downward, size: 28, color: blueColor,),                           
+                                            Text('Swipe your Choices', style: TextStyle(fontSize: 26.0, fontWeight: FontWeight.w500, color: blueColor)),
+                                          ],
+                                      ),
+                                      const SizedBox(height: 16.0),
+                                      const Text('go to Menu', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Text('swipe recipes right ', style: TextStyle(fontSize: 22.0, height: 1.3,fontWeight: FontWeight.w500, color: blueColor)),
+                                          Text('to select', style: TextStyle(fontSize: 22.0, height: 1.3)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 32.0),
+                                      const Text('new users:', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                      const Text('start with 1 recipe', style: TextStyle(fontSize: 18.0, height: 1.3)),
+                                    ],
+                                  )
+
+                                  
                             : 
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -367,11 +554,11 @@ class _ShopCreateState extends State<ShopCreate> {
                                       ],
                                   ),
                                   // Text('Menu, Shop, Save then Cook...', style: TextStyle(fontSize: 22.0, height: 1.5)),
-                                  Text("swipe items from don't buy", style: TextStyle(fontSize: 22.0, height: 1.5)),
+                                  const Text("swipe items from don't buy", style: TextStyle(fontSize: 22.0, height: 1.5)),
                                 ],
                               )
 
-                          : Center(child: ShopList(listTab: 'list', activeList: globals.shopBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify, inactiveTry: activateSlider,))
+                          : Center(child: ShopList(listTab: 'list', activeList: globals.shopBuy, shopSwiped: swipedBuy, verifySwiped: swipedVerify,firstItemSelect: sliderMakeFirstBuy, inactiveTry: activateSlider,))
                 
                       
                     
@@ -382,115 +569,246 @@ class _ShopCreateState extends State<ShopCreate> {
                   (_isDateSelected == true)
                     ?
                         AnimatedPositioned(
-                          top: 100.0,
-                          left: _sliderLeft ? (_sliderMargin / 2) : (my_screenWidth + 80.0),
+                          top:  (my_screenHeight - my_screenDisplay) / 2,
+                          left: _sliderLeftCompleteBuy ? (_sliderMargin / 2) : (my_screenWidth + 80.0),
                           duration: const Duration(milliseconds: 500),
-                          child: Container(
-                            height: my_screenHeight * .55,
-                            width: my_screenWidth - _sliderMargin,  
-                            decoration: BoxDecoration(
-                              color: Colors.white,    
-                              borderRadius: const BorderRadius.all(Radius.circular(10)) ,
-                              border: Border.all(
-                                width: 4,
-                                color: blueColor,
-                              ),
-                            ),                 
-                            // color: Colors.blue,
+                          child: SliderCompleteShopping( 
+                            sliderMargin: _sliderMargin,
+                            fromPage: 'shop',
+                            confirmComplete: shopConfirmComplete,
+                            cancelComplete: shopCancelComplete,
+                          ),
+
+
+
+                          // child: Container(
+                          //   height: my_screenHeight * .55,
+                          //   width: my_screenWidth - _sliderMargin,  
+                          //   decoration: BoxDecoration(
+                          //     color: Colors.white,    
+                          //     borderRadius: const BorderRadius.all(Radius.circular(10)) ,
+                          //     border: Border.all(
+                          //       width: 4,
+                          //       color: blueColor,
+                          //     ),
+                          //   ),                 
+                          //   // color: Colors.blue,
                           
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: [
-                                      (globals.activeMenu['commit_status']) < 4
-                                        ? const Text('Confirm Purchase', style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),)
-                                        : Column(
-                                          children: const [
-                                            Text('Completed Purchase', style: TextStyle(fontSize: 18.0, color: Colors.black),),
-                                            Text("No changes allowed", style: TextStyle(fontSize: 14.0, color: Color(0xFFe9813f)),),
-                                          ],
-                                        ),
-                                      Column(
-                                        children: [
-                                          const Text('Items'),
-                                          const SizedBox(height: 2.0),
-                                          Text(commitCount.toString(), style: const TextStyle(fontSize: 18.0, color: blueColor),),
-                                        ],
-                                      ),
-                                      Column(
-                                        children: [
-                                          const Text('Savings'),
-                                          const SizedBox(height: 2.0),
-                                          Text('\$ ${commitSavings.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18.0, color: blueColor),),
-                                        ],
-                                      ),
+                          //   child: Column(
+                          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          //     children: [
+                          //       Expanded(
+                          //         child: Column(
+                          //           mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          //           children: [
+                          //             (globals.activeShop['commit_status']) < 4
+                          //               ? const Text('Confirm Purchase', style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),)
+                          //               : Column(
+                          //                 children: const [
+                          //                   Text('Completed Purchase', style: TextStyle(fontSize: 18.0, color: Colors.black),),
+                          //                   Text("No changes allowed", style: TextStyle(fontSize: 14.0, color: Color(0xFFe9813f)),),
+                          //                 ],
+                          //               ),
+                          //             Column(
+                          //               children: [
+                          //                 const Text('Items'),
+                          //                 const SizedBox(height: 2.0),
+                          //                 Text(commitCount.toString(), style: const TextStyle(fontSize: 18.0, color: blueColor),),
+                          //               ],
+                          //             ),
+                          //             Column(
+                          //               children: [
+                          //                 const Text('Savings'),
+                          //                 const SizedBox(height: 2.0),
+                          //                 Text('\$ ${commitSavings.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18.0, color: blueColor),),
+                          //               ],
+                          //             ),
 
-                                      (globals.activeMenu['commit_status']) < 4
-                                        ? 
-                                          Container(
-                                            width: double.infinity,
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(left: 50.0, right: 50.0),
-                                              child: ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  primary: blueColor, // background
-                                                  onPrimary: Colors.white, // foreground
-                                                  padding: const EdgeInsets.all(8.0),    
-                                                  shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(6),) 
-                                                ),
-                                                onPressed: () {
+                          //             (globals.activeShop['commit_status']) < 4
+                          //               ? 
+                          //                 Container(
+                          //                   width: double.infinity,
+                          //                   child: Padding(
+                          //                     padding: const EdgeInsets.only(left: 50.0, right: 50.0),
+                          //                     child: ElevatedButton(
+                          //                       style: ElevatedButton.styleFrom(
+                          //                         primary: blueColor, // background
+                          //                         onPrimary: Colors.white, // foreground
+                          //                         padding: const EdgeInsets.all(8.0),    
+                          //                         shape: RoundedRectangleBorder(
+                          //                             borderRadius: BorderRadius.circular(6),) 
+                          //                       ),
+                          //                       onPressed: () {
                                                   
-                                                  DateTime dateToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-                                                  globals.activeMenu['commit_status_new'] = 4;
-                                                  globals.activeMenu['date_shopped'] = fx.FormatDate(dateToday.toString());
-                                                  globals.activeMenu['shopped_count'] = commitCount;
-                                                  globals.activeMenu['shopped_total'] = commitTotal;
-                                                  globals.activeMenu['shopped_savings'] = commitSavings;
+                          //                         DateTime dateToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+                          //                         globals.activeShop['commit_status_new'] = 4;
+                          //                         globals.activeShop['date_shopped'] = fx.FormatDate(dateToday.toString());
+                          //                         globals.activeShop['shopped_count'] = commitCount;
+                          //                         globals.activeShop['shopped_total'] = commitTotal;
+                          //                         globals.activeShop['shopped_savings'] = commitSavings;
                                                   
-                                                  checkForChanges(4);  // this also saves 
+                          //                         checkForChanges(4);  // this also saves 
 
-                                                  Future.delayed(const Duration(milliseconds: 300), () {
-                                                    setState(() { _sliderLeft = false; });
-                                                  });
-                                                },
-                                                child: const Text('Confirm')),
-                                            ),
-                                          )
+                          //                         Future.delayed(const Duration(milliseconds: 300), () {
+                          //                           setState(() { _sliderLeftCompleteBuy = false; });
+                          //                         });
+                          //                       },
+                          //                       child: const Text('Confirm')),
+                          //                   ),
+                          //                 )
 
-                                        : const SizedBox(height: 30.0,)
+                          //               : const SizedBox(height: 30.0,)
 
                                         
                                 
                                 
-                                    ],
-                                  ),
-                                ),
+                          //           ],
+                          //         ),
+                          //       ),
 
-                                InkWell(child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0, right: 12.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text((globals.activeMenu['commit_status'] < 4) ? 'Cancel' : 'Got it', style: const TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
-                                    ],
-                                  ),
-                                ),
-                                  onTap: () {
-                                    setState(() {
-                                      _sliderLeft = false;
-                                    });
-                                    },
-                                )
-                              ],
-                            )
+                          //       InkWell(child: Padding(
+                          //         padding: const EdgeInsets.only(bottom: 8.0, right: 12.0),
+                          //         child: Row(
+                          //           mainAxisAlignment: MainAxisAlignment.end,
+                          //           children: [
+                          //             Text((globals.activeShop['commit_status'] < 4) ? 'Cancel' : 'Got it', style: const TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
+                          //           ],
+                          //         ),
+                          //       ),
+                          //         onTap: () {
+                          //           setState(() {
+                          //             _sliderLeftCompleteBuy = false;
+                          //           });
+                          //           },
+                          //       )
+                          //     ],
+                          //   )
+                          // ),
+
+
+                        )
+                    : Container(),
+
+
+                  
+                
+
+                    // do you want to lock shopping
+                    (currUser.seenInfo[1] == '2')
+                      ? 
+                        AnimatedPositioned(
+                          top:  (my_screenHeight - my_screenDisplay) / 2,
+                          left: _sliderLeftShopLock ? (_sliderMargin / 2) : (my_screenWidth + 80.0),
+                          duration: const Duration(milliseconds: 500),
+                          child: SliderDontShowAgain(
+                            myMargin: _sliderMargin,
+                            ShowIdx: 1,
+                            removeSlider: hideSlider,
+                            acceptTerms: startShopAndLock,
 
                           ),
+
+                          // child: InkWell(
+                          //   child: Container(
+                          //     height: my_screenHeight * .55,
+                          //     width: my_screenWidth - _sliderMargin,  
+                          //     decoration: BoxDecoration(
+                          //       color: Colors.white,    
+                          //       borderRadius: const BorderRadius.all(Radius.circular(10)) ,
+                          //       border: Border.all(
+                          //         width: 4,
+                          //         color: blueColor,
+                          //       ),
+                          //     ),                 
+                          //     // color: Colors.blue,
+                            
+                          //     child: Column(
+                          //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          //       children: [
+                                        
+                          //         const Padding(
+                          //           padding: EdgeInsets.all(16.0),
+                          //           child: Text('Testing 2nd slider?', style: TextStyle(fontSize: 22.0,color: blueColor),),
+                          //         ),
+                                        
+                          //         Expanded(
+                          //           child: Column(
+                          //             mainAxisAlignment: MainAxisAlignment.center,
+                          //             children: [
+                                        
+                          //               Column(
+                          //                 mainAxisAlignment: MainAxisAlignment.center,
+                          //                 children: const [
+                          //                   Text('Like a Recipe', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
+                          //                   Padding(
+                          //                     padding: EdgeInsets.all(2.0),
+                          //                     child: Text('swipe right to Menu', style: TextStyle(fontSize: 20.0),),
+                          //                   ),
+                          //                   ],
+                          //               ),
+                          //               const SizedBox(height: 24.0),                     
+                                              
+                          //               Column(
+                          //                 mainAxisAlignment: MainAxisAlignment.center,
+                          //                 children: const [
+                          //                   Text('Dislike', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
+                          //                   Padding(
+                          //                     padding: EdgeInsets.all(2.0),
+                          //                     child: Text('swipe left to Reject', style: TextStyle(fontSize: 20.0),),
+                          //                   ),
+                          //                   ],
+                          //               ),
+                          //               const SizedBox(height: 24.0),
+                                                                        
+                          //               Column(
+                          //                 mainAxisAlignment: MainAxisAlignment.center,
+                          //                 children: const [
+                          //                   Text('Maybe Later', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
+                          //                   Padding(
+                          //                     padding: EdgeInsets.all(2.0),
+                          //                     child: Text('keep in Swipe', style: TextStyle(fontSize: 20.0),),
+                          //                   ),
+                          //                   ],
+                          //               ),
+                          //               const SizedBox(height: 24.0), 
+                                        
+                          //             ],
+                          //           ),
+                          //         ),
+                                  
+                          //         InkWell(
+                          //           child: Padding(
+                          //             padding: const EdgeInsets.only(bottom: 12.0, right: 16.0),
+                          //             child: Row(
+                          //               mainAxisAlignment: MainAxisAlignment.end,
+                          //               children: const [
+                          //                 // Text((globals.activeShop['commit_status'] < 4) ? 'Cancel' : 'Got it', style: const TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
+                          //                 Text("Don't show again", style: TextStyle(fontSize: 20.0,color: Color(0xFFe9813f)),),
+                          //               ],
+                          //             ),
+                          //           ),
+                          //           onTap: () {
+                          //             final GlobalFunctions fx = GlobalFunctions();
+                          //             fx.seenInfoSet(0, '0');
+                          //             setState(() {
+                          //               _sliderLeftShopLock = false;
+                          //             });
+                          //           },
+                          //         )
+                                        
+                                
+                          //       ],
+                          //     )
+                                        
+                          //   ),
+                          //       onTap: () {
+                          //         setState(() {
+                          //           _sliderLeftShopLock = false;
+                          //         });
+                          //       },
+                          // ),
                         )
-                    : Container()
+                      : Container(),
 
               ],
 
@@ -578,10 +896,16 @@ class _ShopCreateState extends State<ShopCreate> {
     }
   }
 
+
   updateVerify(int id, int pos) {
+    
     for (var all in globals.shopVerifyAll) {
       if (all['index'] == id) {
-        all['dont'] = (pos == 1) ? false : true;
+        if (pos == -1) {
+          all['dont'] = 'dont';
+        }
+        // all['dont'] = (pos == 1) ? 'keep' : 'dont';
+        // all['dont'] = (pos == 1) ? false : true;
         // all['shop_accept'] = pos;
         all['changed'] = true;
       }
@@ -599,10 +923,11 @@ class ShopList extends StatefulWidget {
   final List<dynamic> activeList;                    // ** not sure if we tell what list - these are global list - but be careful with tab (dont)
   final Function(String, String, Map) shopSwiped;
   final Function(String, String, Map) verifySwiped;
+  final VoidCallback firstItemSelect;
   final VoidCallback inactiveTry;
 
   const ShopList({required this.listTab, required this.activeList,
-    required this.shopSwiped, required this.verifySwiped, required this.inactiveTry,
+    required this.shopSwiped, required this.verifySwiped, required this.firstItemSelect, required this.inactiveTry,
     Key? key}) : super(key: key);
 
   @override
@@ -621,7 +946,7 @@ class _ShopListState extends State<ShopList> {
   String catName = '';
   
   // bool _isCommited = false;   // or do by status number
-  int commitThresh = 5;
+  int commitThresh = 4;   // 5;
   int commitCount = 0;
   int inactiveCount = 0;
 
@@ -640,8 +965,12 @@ class _ShopListState extends State<ShopList> {
 
     selectedCategory(globals.shopSubCat); 
     selectedStore(globals.shopSubStore);
+
+    // print('---    filetered list count  --  ' + filteredList.length.toString());
+    // print('---    filetered list count  --  ' + commitThresh.toString());
     
-    if (filteredList.length < (commitThresh+2)) {commitThresh = 3;}   // 6 or less, commit at 3
+    // I moved the shop threshold to 2 - if we move back to 5, we need to change back to this
+    if (filteredList.length < (commitThresh+2)) {commitThresh = 2;}   // 5 or less, commit at 2
 
   }
 
@@ -651,6 +980,7 @@ class _ShopListState extends State<ShopList> {
     print('------   selected store  -- $index');
 
     currStore!.ChangeStore(globals.userStores[index].storeID, globals.userStores[index].storeName);
+    globals.shoppingListPopulated = false;
     setState(() {
       // storeSelected = index;
       globals.shopSubStore = index;
@@ -736,7 +1066,7 @@ class _ShopListState extends State<ShopList> {
   countChange(bool val) {
 
     if (globals.changesMadeBuy == false) {globals.changesMadeBuy = true;};
-    if (globals.activeMenu['commit_status_new'] > 2) {return;}
+    if (globals.activeShop['commit_status_new'] > 2) {return;}
     // we only need to count committed - if 0, 1 or 2 (nothing, setup, commit-not purchase)
     // >2 we bought items on list
 
@@ -749,12 +1079,28 @@ class _ShopListState extends State<ShopList> {
 
   addCommit() {
     commitCount +=1;
-    
-    if (globals.activeMenu['commit_status'] < 2) {     // 1-setup but not committed (not using yet)
+
+    print('---    add commit   during shopping -------');
+    print(commitCount);
+    print(globals.activeShop['commit_status']);
+    print(globals.shopThreshMet);
+
+
+    if (globals.activeShop['commit_status'] < 2) {     // 1-setup but not committed (not using yet)
       // only for uncommitted shopping
-        if (commitCount == commitThresh) {
-            globals.shopThreshMet = true;
-        }
+      if (globals.shopThreshMet == false) {
+          if (commitCount == 1) {
+            print(' threshold met callback activated');
+            widget.firstItemSelect();
+          } else {
+            if (commitCount <= commitThresh) {
+                globals.shopThreshMet = true;
+            }
+          }
+      
+
+      }
+
     }
 
   }
@@ -769,11 +1115,11 @@ class _ShopListState extends State<ShopList> {
 
   // commitShopping() {
   //   // need to update in 3 places:
-  //   // activeMenu, menuCommitList and maybe db (can do later when saving other changes)
-  //   globals.activeMenu['commit_status'] = 2;
+  //   // activeShop, menuCommitList and maybe db (can do later when saving other changes)
+  //   globals.activeShop['commit_status'] = 2;
   //   for (var mc in globals.menuCommit) {
   //     print(mc);
-  //     if (mc['id'] == globals.activeMenu['id']) {
+  //     if (mc['id'] == globals.activeShop['id']) {
   //       mc['commit_status'] = 2;
   //     }
   //   }
@@ -785,9 +1131,9 @@ class _ShopListState extends State<ShopList> {
 
     return Container(
 
-      color: (globals.activeMenu['commit_status'] < 3) ? null : Colors.grey[300],   
+      color: (globals.activeShop['commit_status'] < 3) ? null : Colors.grey[300],   
       
-      padding: (globals.activeMenu['commit_status'] < 3)
+      padding: (globals.activeShop['commit_status'] < 3)
         ? null
         : const EdgeInsets.only(left: 16, right: 16),
       
@@ -850,11 +1196,10 @@ class _ShopListState extends State<ShopList> {
                     sameCat = (index == 0 || catName == 'Verify') ? false : filteredList[index]['cat_main'] == filteredList[index-1]['cat_main'];
                     return Container(              
                           // height: (widget.listTab == 'list') ? (sameCat == false ? 80 : 55) : 40,
-                          height: (sameCat == false ? 80 : 55),
-                          // width: 70,
-                          // color: Colors.red,
                           
-                          margin: EdgeInsets.only(top: (sameCat) ? 0.0 : 4.0),
+                          height: (filteredList[index]['option_name'].length > 24) ? (sameCat == false ? 100 : 60) : (sameCat == false ? 86 : 55),     // 55),
+                          // length of option name is in 3 places                         
+                          margin: EdgeInsets.only(top: (sameCat) ? 2.0 : 6.0),    // space between panels
 
                       child: Dismissible(
                         // key: Key(filteredList[index]),
@@ -863,7 +1208,7 @@ class _ShopListState extends State<ShopList> {
                         // key:  UniqueKey(),
               
                         confirmDismiss: (direction) async {
-                          if (globals.activeMenu['commit_status'] < 3) {
+                          if (globals.activeShop['commit_status'] < 3) {
                               if (direction == DismissDirection.startToEnd) {    // this is a right-swipe
                                     if (widget.listTab == 'list') {
                                       return false;
@@ -902,7 +1247,7 @@ class _ShopListState extends State<ShopList> {
                         
                                 (sameCat == false) 
                                   ? Padding(
-                                    padding: const EdgeInsets.only(bottom: 2.0),
+                                    padding: const EdgeInsets.only(top: 6.0, bottom: 4.0),
                                     child: Text((filteredList[index]['cat_main'] != 0) ? filteredList[index]['cat_main'].toString() : 'Other', style: const TextStyle(fontSize: 18.0),),
                                   )
                                   : Container(),
@@ -918,7 +1263,7 @@ class _ShopListState extends State<ShopList> {
                                       // shadowColor:Color(0xFFe9813f), // Colors.black,
                                       child: Container(
                                         // color: Colors.red,
-                                        padding: const EdgeInsets.only(top: 6.0, left: 10.0, right: 10.0, bottom: 6.0),
+                                        padding: (filteredList[index]['option_name'].length > 24) ? EdgeInsets.only(top: 4.0, left: 10.0, right: 10.0, bottom: 6.0) : EdgeInsets.only(top: 6.0, left: 10.0, right: 10.0, bottom: 6.0),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
@@ -926,6 +1271,13 @@ class _ShopListState extends State<ShopList> {
                                               mainAxisAlignment: MainAxisAlignment.start,
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
+                                                
+
+                                                // tried to put the title on top - not good bc of checkmark 
+                                                // Container(
+                                                //   width: my_screenWidth * .7,
+                                                //     child: Text(filteredList[index]['option_name'], overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: blueColor),)
+                                                //     ),
 
                       
                                                 Row(
@@ -942,7 +1294,7 @@ class _ShopListState extends State<ShopList> {
                                                           activeColor: const Color(0xFFe9813f),
                                                           onChanged: (val) {
                                                             // selectedShopItem(val!, filteredList[index]['id'], filteredList[index]['item']);
-                                                            if (globals.activeMenu['commit_status'] < 3) {
+                                                            if (globals.activeShop['commit_status'] < 3) {
                                                                 if (widget.listTab == 'list') {
                                                                   setState(() {
                                                                     filteredList[index]['shop_check'] = val; 
@@ -961,35 +1313,49 @@ class _ShopListState extends State<ShopList> {
                                                         Column(
                                                           crossAxisAlignment: CrossAxisAlignment.start,
                                                           children: [
-                                                            Text(filteredList[index]['item'],
-                                                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: blueColor),),
+                                                            Container(
+                                                              width: my_screenWidth * .58,
+                                                                // height: 36.0,  
+                                                                height: (filteredList[index]['option_name'].length > 24) ? 32.0 : 16.0,
+                          
+                                                                child: Column(
+                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Text(filteredList[index]['option_name'], overflow: TextOverflow.clip, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: blueColor)),
+                                                                  ],
+                                                                )
+                                                                ),
 
                                                             (filteredList[index]['cat_main'] != 0)
                                                               ? 
                                                                 Padding(
-                                                                  padding: const EdgeInsets.only(left: 16.0),
+                                                                  padding: const EdgeInsets.only(left: 16.0, top: 2.0),
                                                                   child: Row(
                                                                     children: [
                                                                       Text(filteredList[index]['shop_sug'].toString()),
-                                                                      const SizedBox(width: 4,),
+                                                                      SizedBox(width: (filteredList[index]['units_sell'].toString().contains('+')) ? 0 : 4,),
                                                                       Text(filteredList[index]['units_sell'].toString()),
                                                                       // (filteredList[index]['shop_sug'] > 1) ? Text('s') : Container()
                                                                       Text(doWeAddS(filteredList[index]['shop_sug'], filteredList[index]['units_sell']))
                                                                     ],
                                                                   ),
                                                                 )              
-                                                              :                           
+                                                              :         
+                                                              // items not in inventory
                                                               Padding(
                                                                   padding: const EdgeInsets.only(left: 16.0),
                                                                   child: Row(
                                                                     children: [
-                                                                      Text(filteredList[index]['total_serv'].toString()),
+                                                                      Text(filteredList[index]['shop_sug'].toString()),
                                                                       const SizedBox(width: 4,),
-                                                                      Text(filteredList[index]['cook'].toString()),
-                                                                      Text(doWeAddS(filteredList[index]['total_serv'], filteredList[index]['cook']))
+                                                                      Text(filteredList[index]['units_sell'].toString()),
+                                                                      Text(doWeAddS(filteredList[index]['shop_sug'], filteredList[index]['units_sell']))
                                                                     ],
                                                                   ),
-                                                                )           
+                                                                )                      
+
+                                                              //   )           
 
                                                           ],
                                                         ),
@@ -1008,13 +1374,23 @@ class _ShopListState extends State<ShopList> {
                                                 Column(
                                                   crossAxisAlignment: CrossAxisAlignment.end,
                                                   children: [
-                                                        Text("\$  ${(filteredList[index]['shop_sug'] * filteredList[index]['option_price']).toStringAsFixed(2)}",
-                                                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                        Container(
+                                                          // height: 30,
+                                                          // child: Text("\$  ${(filteredList[index]['shop_sug'] * filteredList[index]['option_price']).toStringAsFixed(2)}",
+                                                          child: Text("\$  ${(filteredList[index]['shop_sug'] * ((filteredList[index]['deal_price'] !=0) ? filteredList[index]['deal_price'] : filteredList[index]['option_price'])).toStringAsFixed(2)}",
+                                                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                        ),
                                                         const SizedBox(height: 4,),
                                                         Padding(
-                                                          padding: const EdgeInsets.only(right: 60.0),
-                                                          child: Text("(${(filteredList[index]['shop_sug'] * (filteredList[index]['option_price'] - filteredList[index]['deal_price'])).toStringAsFixed(2)})",
-                                                              style: const TextStyle(fontWeight: FontWeight.w600, color: blueColor),),
+                                                          padding: const EdgeInsets.only(right: 40.0),
+
+                                                          child: 
+                                                          (filteredList[index]['deal_price'] == 0) 
+                                                            ? Container()
+                                                            :
+                                                              Text("(${(filteredList[index]['shop_sug'] * (filteredList[index]['option_price'] - filteredList[index]['deal_price'])).toStringAsFixed(2)})",   
+                                                                  style: const TextStyle(fontWeight: FontWeight.w600, color: blueColor),),
+                                                              // Text("(${(filteredList[index]['option_price'] - filteredList[index]['deal_price']).toStringAsFixed(2)})",)
                                                         ),
                                                 ],)
                                               : const SizedBox(width: 30)
@@ -1046,7 +1422,7 @@ class _ShopListState extends State<ShopList> {
                                         key: Key(filteredList[index]['index'].toString()),
                               
                                         confirmDismiss: (direction) async {
-                                          if (globals.activeMenu['commit_status'] < 3) {
+                                          if (globals.activeShop['commit_status'] < 3) {
                                               if (direction == DismissDirection.startToEnd) {    // this is a right-swipe
                                                     if (widget.listTab == 'list') {
                                                       return false;
@@ -1078,9 +1454,15 @@ class _ShopListState extends State<ShopList> {
                                       
                                       (index == 0)
                                         ?
-                                          const Padding(
-                                              padding: EdgeInsets.only(top: 10.0, bottom: 14.0),
-                                              child: Text('Items you may have at Home', style: TextStyle(fontSize: 18.0),),
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 10.0, bottom: 14.0),
+                                              child: Column(
+                                                children: const [
+                                                  Text('Items you may have at Home', style: TextStyle(fontSize: 18.0),),
+                                                  SizedBox(height: 2.0),
+                                                  Text('(check if needed)', style: TextStyle(fontSize: 16.0),),
+                                                ],
+                                              ),
                                               // child: Text('Select when you Have?', style: TextStyle(fontSize: 18.0),),
                                             )
 
@@ -1100,8 +1482,9 @@ class _ShopListState extends State<ShopList> {
                                               elevation: 10,
                                               // shadowColor:Color(0xFFe9813f), // Colors.black,
                                               // color: Colors.white,
-                                              color: (filteredList[index]['shop_check']) ? goldColorLight : Colors.white,   // ? Colors.orange[100] : Colors.white,
-                                              // color: (filteredList[index]['dont']) ? Colors.grey[300] : Colors.orange[100],
+                                              // color: (filteredList[index]['shop_check']) ? goldColorLight : Colors.white,   // ? Colors.orange[100] : Colors.white,
+                                              // color: (filteredList[index]['dont']) ? Colors.grey[300] : Colors.yellow[200],
+                                              color: (filteredList[index]['dont'] == 'want') ? Colors.yellow[200] : Colors.grey[300],
                                             margin: const EdgeInsets.only(right:30, left: 30),
                                             child: Container(
                                               height: 50.0,
@@ -1112,9 +1495,15 @@ class _ShopListState extends State<ShopList> {
                                           onTap: () {
                                             // removed for swipe function - keeping in case i want back
                                             // if we want to check off that it is in our cart - might do by shop accept
-                                            if (globals.activeMenu['commit_status'] < 3) {
+                                            if (globals.activeShop['commit_status'] < 3) {
                                                 setState(() {
-                                                    filteredList[index]['shop_check'] = !filteredList[index]['shop_check'];
+                                                    // filteredList[index]['shop_check'] = !filteredList[index]['shop_check'];
+                                                    if (filteredList[index]['dont'] == 'keep') {
+                                                      filteredList[index]['dont'] = 'want';
+                                                    } else {
+                                                      filteredList[index]['dont'] = 'keep';
+                                                    }
+                                                    filteredList[index]['changed'] = true;
                                                 });
                                             } else {
                                                 testInactiveCount();  
@@ -1134,6 +1523,11 @@ class _ShopListState extends State<ShopList> {
                               }
                             )
                   ),
+
+
+          SizedBox(height:20.0),
+
+
 
 
           // so screen wont be block if No Deals or All Accepted/Rejected
@@ -1213,7 +1607,7 @@ class StoreSelector extends StatelessWidget {
 
 
 
-class CatSelector extends StatelessWidget {
+class CatSelector extends StatefulWidget {
 
   final String catName;
   final int index;
@@ -1223,26 +1617,87 @@ class CatSelector extends StatelessWidget {
   CatSelector({required this.catName,required this.index, required this.isSelected, required this.categoryChanged,
     Key? key}) : super(key: key);
 
+  @override
+  State<CatSelector> createState() => _CatSelectorState();
+}
+
+class _CatSelectorState extends State<CatSelector> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Color?> _colorAnimation;
+
+  bool verifyAttention = true;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    // Initialize AnimationController for the color animation
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..repeat(reverse: true); // Repeat animation with reverse
+
+    // Define a ColorTween to fade between two colors
+    _colorAnimation = ColorTween(
+      begin: Colors.white,
+      end: blueColor,
+    ).animate(_controller);
+
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose(); // Dispose controller when done
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 14.0),
-      child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size.zero, // Set this
-                      // padding: EdgeInsets.zero, // and this
-                      padding: const EdgeInsets.only(left: 14.0, right: 14.0),    
-                      primary:  (isSelected ?  goldColor : Colors.white), // const Color(0xFFe9813f) : Colors.white), // background
-                      onPrimary: Colors.black, // foreground  
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),) 
-                    ),
-                    onPressed: () {
-                      categoryChanged(index);
-                    },
-                    child:  Text(catName, style: TextStyle(color: isSelected ?  Colors.white : Colors.black, fontSize: 16.0)),
-                ),
+      padding: const EdgeInsets.only(right: 14.0, bottom: 2.0),
+      child: 
+        (widget.catName != 'Verify')
+          ?
+            ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size.zero, // Set this
+                          // padding: EdgeInsets.zero, // and this
+                          padding: const EdgeInsets.only(left: 14.0, right: 14.0),    
+                          primary:  (widget.isSelected ?  goldColor : Colors.white), // const Color(0xFFe9813f) : Colors.white), // background
+                          onPrimary: Colors.black, // foreground  
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),) 
+                        ),
+                        onPressed: () {
+                          widget.categoryChanged(widget.index);
+                        },
+                        child:  Text(widget.catName, style: TextStyle(color: widget.isSelected ?  Colors.white : Colors.black, fontSize: 16.0)),
+                    )
+          : 
+            // we are bringing attention to the verify button until it is selected once
+            AnimatedBuilder(
+              animation: _colorAnimation,   
+              builder: (context, child) { 
+                return ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: Size.zero, // Set this
+                              // padding: EdgeInsets.zero, // and this
+                              padding: const EdgeInsets.only(left: 14.0, right: 14.0),    
+                              primary:  (widget.isSelected ?  goldColor : (verifyAttention == true) ? (_colorAnimation.value ?? Colors.white) : Colors.white), // Colors.white) is a fallback color
+                              onPrimary: Colors.black, // foreground  
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),) 
+                            ),
+                            onPressed: () {
+                              widget.categoryChanged(widget.index);
+                              verifyAttention = false;
+                            },
+                            child:  Text(widget.catName, style: TextStyle(color: widget.isSelected ?  Colors.white : Colors.black, fontSize: 16.0)),
+                        );
+              },
+
+            )
     );
   }
 }

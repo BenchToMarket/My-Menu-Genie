@@ -124,8 +124,8 @@ class _UserLoginState extends State<UserLogin> {
         iconTheme: const IconThemeData(
           color: Colors.white
         ),
-        title: const Center(child: Padding(
-          padding: EdgeInsets.only(right: 0.0),
+        title: Center(child: Padding(
+          padding: EdgeInsets.only(right: widget.fromSignup == true  ? 60.0 : 0.0),
           child: (Text('Log In', style: TextStyle(color: Colors.white))),
         )),
       ),
@@ -171,7 +171,7 @@ class _UserLoginState extends State<UserLogin> {
                           if (credMatch == true) {
                             // print('loging in user ---- '+ curr_user.user_name);
                             // ignore: use_build_context_synchronously
-                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MyBottomNavigationBar()));
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MyBottomNavigationBar(noInternetConnection: false,)));
                           }
                         
                         },
@@ -197,6 +197,21 @@ class _UserLoginState extends State<UserLogin> {
                         text2: 'You can provide a specific password in the email or we will generate a random password. \nThis may take 24 hours.'),),
                     ),
 
+
+                    TextButton(
+                      onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                      child: const Text(
+                          "No Account? Join for Free",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: blueColor,
+                          ),
+                        ),
+                    ),
+
+
                   
                   ],
                 )   
@@ -209,6 +224,8 @@ class _UserLoginState extends State<UserLogin> {
   }
 
   Future<bool> testifUserExists(BuildContext context) async {
+
+    // print('111111111111111111111111111111111');
 
     final PhoenixFunctions px = PhoenixFunctions();
     final GlobalFunctions fx = GlobalFunctions();  
@@ -230,6 +247,9 @@ class _UserLoginState extends State<UserLogin> {
 
       String memberSince = fx.FormatDate(user['created_on']);
 
+      // print('222222222222222222222222222222222222');
+      // print(user);
+
       // list of store prefs
       // https://stackoverflow.com/questions/60220216/flutter-how-to-store-list-of-int-in-shared-preference
 
@@ -237,13 +257,19 @@ class _UserLoginState extends State<UserLogin> {
       prefs.setInt("currentUserID", user['id']); 
       prefs.setInt("userServeSize", user['json_prefs']['serv_size']);                 // ** TODO - need to pull from user preferneces
       prefs.setInt('appVersion', user['app_version']);
+      prefs.setInt('userPlan', user['plan_id']);
       // prefs.setStringList('store_list', ["1"]);
+      prefs.setString('seenInfo', '2222222222');
 
       currUser = CurrentUser(
         userID: prefs.getInt("currentUserID")!,
         userIDString: prefs.getInt("currentUserID").toString(),
         userServeSize: prefs.getInt("userServeSize")!,
+        userPlan: prefs.getInt("userPlan")!,
+        seenInfo: prefs.getString("seenInfo")!,
       );
+
+      print(currUser);
 
       if (user['id'] <= 30) {   // == 1 || user['id'] == 34 || user['id'] == 41 || user['id'] == 53) {
         Provider.of<GlobalVar>(context, listen: false).setIsAdmin(true);
@@ -265,7 +291,7 @@ class _UserLoginState extends State<UserLogin> {
 
         for (var user in verified) {
 
-          if (user['email'] == _email) {
+          if (user['email'].toLowerCase() == _email) {
             _emailMatch = true;
             
             // if email does not match, password stays false
@@ -284,6 +310,10 @@ class _UserLoginState extends State<UserLogin> {
       }
     }
 
+    // print('1111111111111111111111111111');
+    // print(_emailMatch);
+    // print(_passwordMatch);
+
     if (_emailMatch != true || _passwordMatch != true) {
       // either email or password does not match, tell user which one
       showDialog(
@@ -291,9 +321,9 @@ class _UserLoginState extends State<UserLogin> {
         builder: (BuildContext context) => InformationDialog(
         context: context,   
         title: 'Incorrect Login',
-        text1: (_emailMatch != true) ? 'email $_email \ndoes not match our records' : '',
-        text2: (_emailMatch == true &&_passwordMatch != true) ? 'password $_password \ndoes not match our records' : '',
-        text3: "Verify entry is correct.\nIf still having trouble:\nsupport@CardiacPeak.com"
+        text1: (_emailMatch == false) ? 'email $_email \nmay not match our records' : '',
+        text2: (_passwordMatch == false) ? 'password $_password \ndoes not match our records' : '',
+        text3: "Verify entry is correct.\nIf still having trouble:\nsupport@menugenie.ai"
         ),);
        
 

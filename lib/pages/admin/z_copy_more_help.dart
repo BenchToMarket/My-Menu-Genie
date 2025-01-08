@@ -93,7 +93,7 @@ class _MoreHelpState extends State<MoreHelp> {
                           context: context,
                           title: 'Support',
                           text1:
-                              'If you need assistance or have an issue with the App, please email with full details to: support@MenuGenie.AI',
+                              'If you need assistance or have an issue with the App, please email with full details to: support@menugenia.ai',
                           // can check for OS with  print(Platform.operatingSystem); (need - import 'dart:io' show Platform; )
                           text2: 'version - 1.0.' + cpAppVersion.toString(),
                           textLink: 'Upgrade on Google Play',
@@ -270,7 +270,7 @@ class _MoreHelpState extends State<MoreHelp> {
                       builder: (BuildContext context) => InformationDialog(
                           context: context,
                           title: 'How to Delete Your Account',
-                          text1:  "Send an email with subject 'Delete Account' to support@MenuGenie.AI",
+                          text1:  "Send an email with subject 'Delete Account' to support@MenuGenie.ai",
                           text2:  "Include your username or email used with Menu Genie AI",
                           text3:  "(optional) Please let us know anything else you want us to know. Deletion is NOT reversible.",
                     ),
@@ -278,31 +278,6 @@ class _MoreHelpState extends State<MoreHelp> {
                 ),
                 
                 const Divider(height: 4, color:blueColor),
-
-
-
-
-                ListTile(
-                  // leading: healthTypes[index].healthIcon, // Icon(Icons.directions_bike), //
-                  title: const Text('Suggestions & Feedback'),
-                  subtitle: const Text('contribute to our Beta'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.double_arrow),
-                    onPressed: () => showDialog(
-                      context: context,
-                      builder: (BuildContext context) => InformationDialog(
-                          context: context,
-                          title: 'Have Suggestions?',
-                          text1:  "We're in Beta. Please be pateint.",
-                          text2:  "We wecome any and all Suggestions or tell us any issues you are experiencing. Contributions that we use, will be rewarded by free stuff or rewards, possibly even a free lifetime premium membership.",
-                          text3:  "email us at contribute@MenuGenie.AI",
-                          // text3:  "email us a contribute@MenuGenie.AI",
-                    ),
-                  ),)
-                ),
-                
-                const Divider(height: 4, color:blueColor),
-
 
 
 
@@ -565,6 +540,12 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
     super.initState();
     globals = Provider.of<GlobalVar>(context, listen: false);
 
+    print('666666666666666666666666666666');
+    print(globals.activeMenu);
+    if (globals.activeMenu.isEmpty) {
+      print('77777777777777777777777777');
+    }
+
     getCommitNumbers();
   }
 
@@ -603,24 +584,23 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                          (globals.activeShop['commit_status']) < 4
+                      // (globals.activeMenu.isNotEmpty)
+                      //   ?
+                          (globals.activeMenu['commit_status']) < 4
                             ?
                               (widget.fromPage == 'shop')
-                                ? const Text('Complete Purchase', style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),)
+                                ? const Text('Finalize Purchase', style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),)
                                 // : Container(
                                 //     padding: EdgeInsets.all(16.0),
                                 //     child: Text('Your have an Active Shopping Cart from ' + currStore!.storeName + '.  You MUST Finalize your Cart before creating a new Menu.', style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),))
                                 : Container(
-                                        padding: EdgeInsets.all(8.0),
+                                        padding: EdgeInsets.all(16.0),
                                         child: Column(
                                           children: [
-                                            Text('Active Shopping Cart from ' + currStore!.storeName, style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600, color: Color(0xFFe9813f)),),
-                                            SizedBox(height: 16.0),
-                                            // Text(' - Finalize your Cart OR', style: TextStyle(fontSize: 18.0, color: blueColor)),
-                                            // Text(' - Cancel to continue Shopping', style: TextStyle(fontSize: 18.0, color: blueColor))
-                                            Text('"Complete" Shopping', style: TextStyle(fontSize: 18.0, color: blueColor)),
-                                            Text('or', style: TextStyle(fontSize: 18.0, color: blueColor)),
-                                            Text('"Cancel" to continue Shopping', style: TextStyle(fontSize: 18.0, color: blueColor))
+                                            Text('Active Shopping Cart from ' + currStore!.storeName, style: TextStyle(fontSize: 18.0, color: Color(0xFFe9813f)),),
+                                            SizedBox(height: 4.0),
+                                            Text(' - Finalize your Cart OR', style: TextStyle(fontSize: 18.0, color: blueColor)),
+                                            Text(' - Cancel to continue Shopping', style: TextStyle(fontSize: 18.0, color: blueColor))
                                           ],
                                         ))
       
@@ -630,6 +610,7 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
                                 Text("No changes allowed", style: TextStyle(fontSize: 14.0, color: Color(0xFFe9813f)),),
                               ],
                             ),
+                          // : Container(),
 
 
                       Column(
@@ -647,7 +628,9 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
                         ],
                       ),
 
-                          (globals.activeShop['commit_status']) < 4
+                      (globals.activeMenu.isNotEmpty)
+                        ?
+                          (globals.activeMenu['commit_status']) < 4
                             ? 
                               Container(
                                 width: double.infinity,
@@ -664,11 +647,11 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
                                     onPressed: () {
                                       
                                       DateTime dateToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-                                      globals.activeShop['commit_status_new'] = 4;
-                                      globals.activeShop['date_shopped'] = fx.FormatDate(dateToday.toString());
-                                      globals.activeShop['shopped_count'] = commitCount;
-                                      globals.activeShop['shopped_total'] = commitTotal;
-                                      globals.activeShop['shopped_savings'] = commitSavings;
+                                      globals.activeMenu['commit_status_new'] = 4;
+                                      globals.activeMenu['date_shopped'] = fx.FormatDate(dateToday.toString());
+                                      globals.activeMenu['shopped_count'] = commitCount;
+                                      globals.activeMenu['shopped_total'] = commitTotal;
+                                      globals.activeMenu['shopped_savings'] = commitSavings;
 
                                       widget.confirmComplete();
                                       
@@ -678,11 +661,13 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
                                       //   setState(() { _sliderLeftCompleteBuy = false; });
                                       // });
                                     },
-                                    child: const Text('Complete')),
+                                    child: const Text('Finalize')),
                                 ),
                               )
 
-                            : const SizedBox(height: 30.0,),                       
+                            : const SizedBox(height: 30.0,)
+                          : const SizedBox(height: 30.0,)
+                        
                 
                 
                     ],
@@ -694,7 +679,10 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text((globals.activeShop['commit_status'] < 4) ? 'Cancel' : 'Got it', style: const TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),)
+                      (globals.activeMenu.isNotEmpty)
+                        ?
+                          Text((globals.activeMenu['commit_status'] < 4) ? 'Cancel' : 'Got it', style: const TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),)
+                        : Container(),
                     ],
                   ),
                 ),
@@ -728,10 +716,10 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
     print('----    checking for changes on shopping list---- new status:  ' + newStatus.toString());
 
     // print(globals.changesMadeBuy);
-    // print(globals.activeShop['commit_status']);
+    // print(globals.activeMenu['commit_status']);
     for (var mc in globals.menuCommit) {
       // print(mc);
-      if (mc['id'] == globals.activeShop['id']) {
+      if (mc['id'] == globals.activeMenu['id']) {
         if (mc['commit_status_new'] < newStatus) {
           mc['commit_status_new'] = newStatus;
         }
@@ -742,7 +730,7 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
     //   print(p);
     // }
 
-    Map<String, dynamic> shopMap = {'menu': globals.activeShop, 'buy': globals.shopBuyAll, 'verify': globals.shopVerifyAll};
+    Map<String, dynamic> shopMap = {'menu': globals.activeMenu, 'buy': globals.shopBuyAll, 'verify': globals.shopVerifyAll};
 
     final jsonChanged = json.encode(shopMap);
 
@@ -751,12 +739,12 @@ class _SliderCompleteShoppingState extends State<SliderCompleteShopping> {
     bool success = await httpSavory.sendShopUpdates(jsonChanged);
 
     // *** do we need to change in global menu list - or just active
-    if (globals.activeShop['commit_status'] < newStatus) {
+    if (globals.activeMenu['commit_status'] < newStatus) {
         // *** we only do like this IF we are creating a shopping list, if we have do something else
         if (success == true) {
-          globals.activeShop['commit_status'] = newStatus;
+          globals.activeMenu['commit_status'] = newStatus;
           // for (var mc in globals.menuCommit) {
-          //   if (mc['id'] == globals.activeShop['id']) {
+          //   if (mc['id'] == globals.activeMenu['id']) {
           //     if (mc['commit_status'] < 2) {
           //       mc['commit_status_new'] = 2;
           //     }
@@ -945,159 +933,4 @@ class _SliderDontShowAgainState extends State<SliderDontShowAgain> {
     
   }
 }
-
-
-class SliderBadConnection extends StatefulWidget {
-
-  final double sliderMargin;
-  final String fromPage;
-  final Function() cancelConnect;
-
-  const SliderBadConnection({required this.sliderMargin, required this.fromPage, required this.cancelConnect, Key? key}) : super(key: key);
-
-  @override
-  State<SliderBadConnection> createState() => _SliderBadConnectionState();
-}
-
-class _SliderBadConnectionState extends State<SliderBadConnection> {
-  @override
-  Widget build(BuildContext context) {
-
-    return InkWell(
-                      child: Container(
-                        height: (widget.fromPage == 'splash') ? my_screenDisplay : my_screenDisplay * .75,
-                        width: my_screenWidth - widget.sliderMargin,  
-                        decoration: BoxDecoration(
-                          color: Colors.white,    
-                          borderRadius: const BorderRadius.all(Radius.circular(10)) ,
-                          border: Border.all(
-                            width: 4,
-                            color: blueColor,
-                          ),
-                        ),                 
-                        // color: Colors.blue,
-                      
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                                  
-                            const Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Text('Poor Internet Connection', style: TextStyle(fontSize: 22.0,color: blueColor),),
-                            ),
-                                  
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text('Connect to WiFi', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
-                                      Padding(
-                                        padding: EdgeInsets.all(2.0),
-                                        child: Text('Go to: Settings/Connections', style: TextStyle(fontSize: 20.0),),
-                                      ),
-                                      ],
-                                  ),
-                                  const SizedBox(height: 24.0),                     
-                                        
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text('Why?', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
-                                      Padding(
-                                        padding: EdgeInsets.only(top:2.0),
-                                        child: Text("store construction", style: TextStyle(fontSize: 20.0),),
-                                      ),
-                                      Text("can weaken cell signal", style: TextStyle(fontSize: 20.0),),
-                                      ],
-                                  ),
-                                  const SizedBox(height: 24.0),                 
-
-                                  (widget.fromPage == 'splash')
-                                    ?
-                                      Padding(
-                                        padding: const EdgeInsets.only(top:24.0, bottom: 24.0),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: const [
-                                            Text('Then Restart App', style: TextStyle(fontFamily: 'Roboto', fontSize: 26.0,fontWeight: FontWeight.w600, color: blueColor),),
-                                            Padding(
-                                              padding: EdgeInsets.only(top:2.0),
-                                              child: Text("after you connect to WiFi", style: TextStyle(fontSize: 20.0),),
-                                            ),
-                                            ],
-                                        ),
-                                      )
-                                    : Container(),
-                                                    
-                                  
-                                ],
-                              ),
-                            ),
-                            
-                            InkWell(
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 12.0, right: 16.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: const [
-                                    Text("Got it!", style: TextStyle(fontSize: 20.0,color: Color(0xFFe9813f)),),
-                                  ],
-                                ),
-                              ),
-                              onTap: () {
-                                widget.cancelConnect();
-                              },
-                            )
-                                  
-                          
-                          ],
-                        )
-                                  
-                      ),
-                          onTap: () {
-                             widget.cancelConnect();
-                          },
-                    );
-    
-  }
-}
-
-// // TODO - notusing here - bc warning to use context in async - duplicating code in Menu & Shop - should be in one
-// popStoresShoppingList(int storeID, BuildContext context) {
-
-//     GlobalVar globals = Provider.of<GlobalVar>(context, listen: false);
-
-//     globals.shopBuyAll.clear();
-//     globals.shopBuy.clear();
-//     globals.shopDontBuy.clear();
-//     globals.shopVerifyAll.clear();
-//     globals.shopVerify.clear();
-//     globals.shopDontVerify.clear();
-//     globals.shopCategory.clear();
-
-//     print('*****************************************');
-
-//     for (var l in globals.shoppingList) {
-//       if (l['store_id'] == storeID) {
-//           print(l['shopping_list']);
-//           print('-------------------------------------------');
-//           globals.shopBuyAll = l['shopping_list']['purchase'];
-//           globals.shopVerifyAll = l['shopping_list']['verify'];
-//           globals.shopBuy = l['shopping_list']['purchase'].where((item) => item['shop_accept'] == 1).toList();
-//           globals.shopDontBuy = l['shopping_list']['purchase'].where((item) => item['shop_accept'] == -1).toList();
-//           globals.shopVerify = l['shopping_list']['verify'].where((item) => (item['dont'] == 'keep' || item['dont'] == 'want')).toList();
-//           globals.shopDontVerify = l['shopping_list']['verify'].where((item) => item['dont'] == 'dont').toList();
-//           // globals.shopVerify = l['shopping_list']['verify'].where((item) => item['dont'] == false).toList();
-//           // globals.shopDontVerify = l['shopping_list']['verify'].where((item) => item['dont'] == true).toList();
-//           globals.shopCategory = l['shopping_list']['shop_cat'];
-//       }
-//     }
-//     globals.shopCategory.insert(0, "Verify");
-//     globals.shopCategory.insert(0, "All");
-
-//   }
 

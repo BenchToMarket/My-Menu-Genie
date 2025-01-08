@@ -56,7 +56,7 @@ class HttpService {
       if (kDebugMode) { print( '************ fetch  verifing user & version   *********** '); }
       final response = await http.get(Uri.parse('$API/user-verify/$userId/$version/$sh/'));
       
-      // print(response.statusCode);
+      print(response.statusCode);
 
       if (response.statusCode == 200) {
         Map<String, dynamic> result = jsonDecode(response.body);
@@ -78,8 +78,10 @@ class HttpService {
   }
 
 
-  Future<int> createNewUser(String userDetails) async {
 
+  Future<Map<String, dynamic>> createNewUser(String userDetails) async {
+
+    print('------      in create   new user -----------');
     sh = fx.determinephoenix();
     int newID = -1;
 
@@ -89,16 +91,105 @@ class HttpService {
 
       if (response.statusCode == 200) {
         // print(response.body);
-        newID = int.parse(response.body);
-        return  newID;
+        Map<String, dynamic> result = jsonDecode(response.body);
+        return result;
       } else {
-        throw "Can't create  user.";
+        throw {'new_id': -1};
       }
     } catch (err) {
       if (kDebugMode) { print('WTF - $err'); }
-      return newID;
+      return {'new_id': -1};
     }
   }
+
+
+  // Future<int> createNewUser_old(String userDetails) async {
+
+  //   sh = fx.determinephoenix();
+  //   int newID = -1;
+
+  //   try {
+    
+  //     final response = await http.patch(Uri.parse('$API/user-create/$sh/'), headers: headers, body: userDetails);
+
+  //     if (response.statusCode == 200) {
+  //       // print(response.body);
+  //       newID = int.parse(response.body);
+  //       return  newID;
+  //     } else {
+  //       throw "Can't create  user.";
+  //     }
+  //   } catch (err) {
+  //     if (kDebugMode) { print('WTF - $err'); }
+  //     return newID;
+  //   }
+  // }
+
+
+  
+  Future<Map<String, dynamic>> getUserPlan() async {
+
+    sh = fx.determinephoenix();
+
+    try {
+    
+      if (kDebugMode) { print( '************ fetch User Plan   *********** '); }
+      final response = await http.get(Uri.parse('$API/user-plan/${currUser.userIDString}/$sh/'));
+
+      if (response.statusCode == 200) {
+        // print(response.body);
+        Map<String, dynamic> result = jsonDecode(response.body);
+        return result;
+      } else {
+        throw {'user_plan': -1};
+      }
+    } catch (err) {
+      if (kDebugMode) { print('WTF - $err'); }
+      return {'user_plan': -1};
+    }
+  }
+
+  
+  Future<Map<String, dynamic>> getUserDefaults() async {
+
+    sh = fx.determinephoenix();
+
+    try {
+    
+      if (kDebugMode) { print( '************ fetch User Defaults   *********** '); }
+      final response = await http.get(Uri.parse('$API/user-defaults/${currUser.userIDString}/$sh/'));
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> result = jsonDecode(response.body);
+        return result;
+      } else {
+        throw {'user_default': -1};
+      }
+    } catch (err) {
+      if (kDebugMode) { print('WTF - $err'); }
+      return {'user_default': -1};
+    }
+  }
+
+  sendDefaultUpdates(String defaultType, int intBeg, int intEnd, String strBeg, String strEnd) async {
+
+    sh = fx.determinephoenix();
+
+    try {
+     
+      final response = await http.patch(Uri.parse('$API/default-update/${currUser.userIDString}/$defaultType/$intBeg/$intEnd/$strBeg/$strEnd/$sh/')); 
+
+      print(response.body);
+      if (response.statusCode == 200) {
+        return true;
+      }
+    } catch (err) {
+      if (kDebugMode) { print('WTF - $err'); }
+      return false;
+    }
+  }
+
+
 
 
 
@@ -116,7 +207,7 @@ class HttpService {
       if (response.statusCode == 200) {
         List<dynamic> result = jsonDecode(response.body);
 
-        print(result);
+        // print(result);
         return result;
       } else {
         throw "Can't get Menu Commit .";
@@ -136,6 +227,7 @@ class HttpService {
     sh = fx.determinephoenix();
     try {
       if (kDebugMode) { print( '************ fetch   User Stores -   *********** '); }
+      // print(shopDate);
       final response = await http.get(Uri.parse('$API/user-stores/${currUser.userIDString}/$shopDate/$sh/'));
       
       // print(response.statusCode);
@@ -308,6 +400,62 @@ class HttpService {
   }
 
 
+  Future<List<dynamic>> rateRecipeReturnNewCookList(int recpDateID, int rating,  String listType) async {
+    
+    // byStore = -1 for all stores. 
+    
+    sh = fx.determinephoenix();
+    try {
+      if (kDebugMode) { print( '************ rating recipe   and  fetch  cooking list  -   *********** '); }
+      final response = await http.get(Uri.parse('$API/rate-recipe/${currUser.userIDString}/$recpDateID/$rating/$listType/$sh/'));
+      
+      // print(response.statusCode);
+      // print(response.body);
+
+      if (response.statusCode == 200) {
+        List<dynamic> result = jsonDecode(response.body);
+
+        // print(result);
+        return result;
+      } else {
+        throw "Can't Rate Recipe.";
+      }
+    } catch (err) {
+      if (kDebugMode) { print('WTF - $err'); }
+      return [];
+    }
+  }
+
+  
+
+  Future<bool> checkConnection() async {
+    // final url = 'http://<your_django_server_url>/api/'; // Replace with your Django API endpoint
+
+    try {
+      final response = await http.get(Uri.parse(API)).timeout(
+        Duration(seconds: 3), // Set a 2-second timeout
+        onTimeout: () {
+          // Handle timeout
+          if (kDebugMode) { print('Connection timed out'); }
+          return http.Response('Error: Timeout', 408);
+          // return false; 
+        },     
+      );
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) { print('Connected to Django API!'); }
+        return true;
+      } else {
+        if (kDebugMode) { print('Failed to connect: ${response.statusCode}'); }
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) { print('Error: $e'); }
+      return false;
+    }
+  }
+
+
 
 
 
@@ -333,22 +481,40 @@ class HttpService {
   }
 
 
-  sendAppVersionUpdates(int userId, int newVersion) async {
+  Future<Map<String, dynamic>> sendAppVersionUpdates(int userId, int newVersion, String sendingUpdate) async {
 
     sh = fx.determinephoenix();
 
     try {
       // final response = await http.patch(Uri.parse('$API/menu-update/$menuChanges/${currUser.userIDString}/$sh/'), headers: headers, body: menuChanges);
-      final response = await http.patch(Uri.parse('$API/user-version/$userId/$newVersion/$sh/'));   //  headers: headers, body: menuChanges);
+      final response = await http.patch(Uri.parse('$API/user-version/$userId/$newVersion/$sendingUpdate/$sh/'));   //  headers: headers, body: menuChanges);
 
       if (response.statusCode == 200) {
-        return true;
+        Map<String, dynamic> result = jsonDecode(response.body);
+        return result;
+      } else {
+        throw {'result': 'falied'};
       }
     } catch (err) {
       if (kDebugMode) { print('WTF - $err'); }
+      return {'result': 'falied'};
+    }
+  }
+
+  Future<bool> sendAppError(String appError) async {
+
+    print('  ------ in  sendAppError  or NEW USER flag  ---------');
+    try {
+      final response = await http.post(Uri.parse(API + '/app-error/' + appError  + '/' + currUser.userIDString + '/'));
+
+      return true;
+    } catch (err) {
+      print('WTF');
+      print(err);
       return false;
     }
   }
+
 
 
 

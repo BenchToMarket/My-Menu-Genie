@@ -24,6 +24,9 @@ import '../admin/savory_api.dart';
 // https://fluttertutorial.in/flutter-sign-up-with-validation/
 // https://stackoverflow.com/questions/56253787/how-to-handle-textfield-validation-in-password-in-flutter
 
+// TODO - should test for interrnet connection - with first http request
+// if no connection change in MyBottomNavigationBar()
+
 class UserSignup extends StatefulWidget {
 
 
@@ -35,7 +38,7 @@ class UserSignup extends StatefulWidget {
 
 class _UserSignupState extends State<UserSignup> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> _formKeyRef = GlobalKey<FormState>();
+  // final GlobalKey<FormState> _formKeyRef = GlobalKey<FormState>();
   final GlobalFunctions fx = GlobalFunctions();
   final PhoenixFunctions px = PhoenixFunctions();
   final HttpService httpSavory = HttpService();
@@ -46,7 +49,7 @@ class _UserSignupState extends State<UserSignup> {
   bool failedVisible = false;
   String failedNotice = 'Failed to Authenticate\ntry again later';
 
-  late String _email;
+  String _email = 'test';
   late String _password;
   // String _username;
   late String _postcode;
@@ -67,7 +70,7 @@ class _UserSignupState extends State<UserSignup> {
         labelText: 'email',
         icon: Icon(FontAwesomeIcons.envelope),
         errorStyle: TextStyle(
-          color: orangeColor,
+          color: Colors.red,
           fontSize: 14.0,
           fontWeight: FontWeight.w600,
           wordSpacing: 1.0,
@@ -87,9 +90,19 @@ class _UserSignupState extends State<UserSignup> {
           return null;
         }
       },
-      onSaved: (String? value) {
-        _email = value!;
+
+      // doing onChanged vs onSaved - so we can send whatever we have in the logs
+      onChanged: (String? value) {
+        _email = value!;                                    
       },
+      // onSaved: (String? value) {
+      //   _email = value!;
+      //   print('9999999999999999999999999999999999');
+      //   final HttpService httpService = HttpService();
+      //   httpService.sendAppError(' -- MENU GENIE  -- NEW USER -- Sign Up email:  $_email');                           
+      // },
+
+
     );
   }
 
@@ -104,7 +117,7 @@ class _UserSignupState extends State<UserSignup> {
           // hintText: "minimum 6 characters", errorText: _passwordError,
           icon: const Icon(FontAwesomeIcons.unlockKeyhole),
           errorStyle: const TextStyle(
-          color: orangeColor,
+          color: Colors.red,
           fontSize: 14.0,
           fontWeight: FontWeight.w600,
           wordSpacing: 1.0,
@@ -139,6 +152,12 @@ class _UserSignupState extends State<UserSignup> {
       },
       onSaved: (String? value) {
         _password = value!;
+      },
+      onTap: () {
+        // print('7777777777777777777');
+        // print(_email);
+        final HttpService httpService = HttpService();
+        httpService.sendAppError(' -- MENU GENIE  -- NEW USER -- Sign Up email:  $_email');    
       },
     );
   }
@@ -189,7 +208,7 @@ class _UserSignupState extends State<UserSignup> {
         labelText: 'zip code',
         icon: Icon(FontAwesomeIcons.envelope),
         errorStyle: TextStyle(
-          color: orangeColor,
+          color: Colors.red,
           fontSize: 14.0,
           fontWeight: FontWeight.w600,
           wordSpacing: 1.0,
@@ -245,7 +264,7 @@ class _UserSignupState extends State<UserSignup> {
           contentPadding: EdgeInsets.only(top: 0, bottom: 0, left: 8.0),
           // icon: Icon(FontAwesomeIcons.user),
           errorStyle: TextStyle(
-          color: orangeColor,
+          color: Colors.red,
           fontSize: 14.0,
           fontWeight: FontWeight.w600,
           wordSpacing: 1.0,
@@ -255,19 +274,32 @@ class _UserSignupState extends State<UserSignup> {
         // maxLength: 6,
 
         validator: (String? value) {
-          String pattern = r'(^(?=.{6,6}$)[a-zA-Z0-9]+(?<![_.])$)';
+          String pattern = r'(^(?=.{4,10}$)[a-zA-Z0-9]+(?<![_.])$)';
           RegExp regExp = RegExp(pattern);
-          if (value!.isEmpty) {
-            // - should ask user if they forgot to enter a promo code
-            return null;
-          } else if (!regExp.hasMatch(value)) {
-            return 'code provided to you';
-          }
+          // I had 9 downloads Oct 15-19 and no new users - testing to see if this requirement
+          // if (value!.isEmpty) {
+          //   // - should ask user if they forgot to enter a promo code
+          //   // return "Enter 'none' if no Promo Code";
+          //   return "No Promo Code - enter 'free'";
+          //   // return null;
+          // }  else if (value.length < 4) {
+          //   return "Verify promo code or put 'free'";
+          // } else if (!regExp.hasMatch(value)) {
+          //   // return 'code provided to you';
+          //   return "Verify promo code or put 'free'";
+          // }
           return null;
         },
         onChanged: (String? value) {
           _referredBy = value!;
-        },        
+          if (_acceptTerms == true) {
+              setState(() {
+                _acceptTerms = false;
+                termsUse = Icon(Icons.check_box_outline_blank);
+                _isButtonDisabled = true;
+              });
+          }
+        },     
         onSaved: (String? value) {
           _referredBy = value!;
         },
@@ -291,6 +323,14 @@ class _UserSignupState extends State<UserSignup> {
   //   await httpService.sendAppError(context,' -- NEW USER -- -- SECURITY -- authetication failed, new user: ' +  _email);
   // }
 
+  determineUserPlan() {
+
+    int userThisPlan = 2;
+
+    
+    return userThisPlan;
+  }
+
   void joinMenuGenie() async {
 
     // for testing 
@@ -298,31 +338,37 @@ class _UserSignupState extends State<UserSignup> {
     // Navigator.push( context, MaterialPageRoute( builder: (context) => ContestPage(false)));  //  => ContestPage(true)));
     // return;
     DateTime today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day); 
+
+    int userPlan = determineUserPlan();   // Basic free plan is default, move to Premium Free if correct promo code
   
-    int _newUserID = await createNewUser();
+    int newUserID = await createNewUser();
     // int _newUserID = 0;
-    if (_newUserID > 0) {
+    if (newUserID > 0) {
       // final CurrentUser userService = CurrentUser();
       // curr_user = await userService.PopulateCurrentUser();
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      int _serv_size = 4;   // TODO - user should select
+      int servSize = 4;   // TODO - user should select
 
       currUser = CurrentUser(
-        userID: _newUserID,
-        userIDString: _newUserID.toString(),
-        userServeSize: _serv_size,
+        userID: newUserID,
+        userIDString: newUserID.toString(),
+        userServeSize: servSize,
+        userPlan: userPlan,
+        seenInfo: '2222222222'
       );
 
       prefs.setBool("isLoggedIn", true); // set to false to test Login
       prefs.setInt("currentUserID",currUser.userID);  
-      prefs.setInt("userServeSize",_serv_size);  
+      prefs.setInt("userServeSize",servSize);  
+      prefs.setInt("userPlan",userPlan);  
       prefs.setInt('appVersion', cpAppVersion);
+      prefs.setString('seenInfo', '2222222222');
 
 
       // **** can send user to another App Info page before we beign
       // ignore: use_build_context_synchronously
-      Navigator.pushReplacement( context, MaterialPageRoute( builder: (context) => const MyBottomNavigationBar()));
+      Navigator.pushReplacement( context, MaterialPageRoute( builder: (context) => const MyBottomNavigationBar(noInternetConnection: false,)));
 
       // Navigator.push( context, MaterialPageRoute( builder: (context) => GetStartedPage('start')));
 
@@ -331,6 +377,7 @@ class _UserSignupState extends State<UserSignup> {
       // Navigator.push( context, MaterialPageRoute( builder: (context) => GamifiedPage('start')));
 
     }
+
   }
 
 
@@ -440,8 +487,23 @@ class _UserSignupState extends State<UserSignup> {
                   //   : Container(),
 
 
+                  SizedBox(height: 8.0,),
 
-                  SizedBox(height: 40),
+                  const Padding(
+                    padding: EdgeInsets.all(6.0),
+                    child: Text("Enter your Promo or Referral Code", style: TextStyle(color: blueColor,)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: _buildReferralField(),
+                  ),
+
+                  // Form(
+                  //   key: _formKeyRef,
+                  //   child: _buildReferralField(),
+                  // ),
+
+                  SizedBox(height: 26.0),
 
                   Row(
                     children: [
@@ -507,9 +569,12 @@ class _UserSignupState extends State<UserSignup> {
                                 _buttonPressed();
                                 // print(' -- Join button pressed --');
 
+                                final HttpService httpService = HttpService();
+                                httpService.sendAppError(' -- MENU GENIE  -- NEW USER -- Join Button Pressed:  $_email');    
+
                                 _gotCityState = await getCityState(); 
 
-                                if (!_formKey.currentState!.validate()) {
+                                if (!_formKey.currentState!.validate()) { // & !_formKeyRef.currentState!.validate()) {
                                   print('wait a minute!!!');
                                   setState(() {
                                     _acceptTerms = false;
@@ -540,6 +605,26 @@ class _UserSignupState extends State<UserSignup> {
                         ),
                   ),
 
+                  // SizedBox(height: 8.0),
+
+                  TextButton(
+                    onPressed: () => Navigator.push(
+                        context, MaterialPageRoute(builder: (context) => UserLogin(fromSignup: true,))),
+                    style: TextButton.styleFrom(
+                      minimumSize: Size.zero, // Set this
+                      padding: EdgeInsets.zero, // and this
+                    ),
+                    child: const Text(
+                        'Login Here',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: blueColor,
+                        ),
+                      ),
+                  ),
+
+ 
+
                   // // **ToDo - trying to align this at bottom of screen, Align does not work
                   // Align(
                   //   alignment: Alignment.bottomCenter,
@@ -555,14 +640,7 @@ class _UserSignupState extends State<UserSignup> {
 
                   SizedBox(height: 26.0,),
 
-                  const Padding(
-                    padding: EdgeInsets.all(6.0),
-                    child: Text("Enter your Promo or Referral Code", style: TextStyle(color: blueColor,)),
-                  ),
-                  Form(
-                    key: _formKeyRef,
-                    child: _buildReferralField(),
-                  ),
+
                 ],
               )),
         ));
@@ -626,7 +704,7 @@ class _UserSignupState extends State<UserSignup> {
         "email": _email,
         "password": _passcodeHash,
         "post_code": _postcode,
-        "ref_by": _referredBy,
+        "ref_by": _referredBy,        // also the Promo Code
         "ref_code": _ref_code,
         "city": _city,
         "state": _state,
@@ -635,7 +713,16 @@ class _UserSignupState extends State<UserSignup> {
       };
 
     final jsonUser = json.encode(newUser);
-    _newUserID = await httpSavory.createNewUser(jsonUser);
+    // _newUserID = await httpSavory.createNewUser(jsonUser);
+    Map<String, dynamic> newUserMap = await httpSavory.createNewUser(jsonUser);
+
+    // {"plan_id":2,"store_pref":1,"new_id":777}
+    // but no difference in basic or premium plan, and store pref does not matter yet
+    // but we have this for later
+
+    _newUserID = newUserMap['new_id'];
+    
+    // TODO - should do something if failed - new_id = -1
 
     return _newUserID;
   }
@@ -658,7 +745,7 @@ class _UserSignupState extends State<UserSignup> {
     final response = await http.get(Uri.parse('$API/user-exists/$_email/$sh/'));
 
     // print(response.statusCode);
-    print(response.body);
+    // print(response.body);
 
     if (response.statusCode == 200) {
       List<dynamic> verified = jsonDecode(response.body);

@@ -27,7 +27,7 @@ class _SaveMonthlyState extends State<SaveMonthly> {
   final HttpService httpSavory = HttpService();
   final GlobalFunctions fx = GlobalFunctions();  
 
-  final double _sliderMargin = 120.0;
+  final double _sliderMargin = 90.0;
   bool _sliderLeft = false;
 
   String timeSpan = 'monthly';
@@ -188,11 +188,11 @@ class _SaveMonthlyState extends State<SaveMonthly> {
 
 
               AnimatedPositioned(
-                top: 100.0,
+                top:  (my_screenHeight - my_screenDisplay) / 2,
                 left: _sliderLeft ? (_sliderMargin / 2) : (my_screenWidth + 80.0),
                 duration: const Duration(milliseconds: 500),
                 child: Container(
-                  height: my_screenHeight * .55,
+                  height: my_screenDisplay * .75,
                   width: my_screenWidth - _sliderMargin,  
                   decoration: BoxDecoration(
                     color: Colors.white,    
@@ -254,9 +254,17 @@ class _SaveMonthlyState extends State<SaveMonthly> {
                         ),
                       ),
 
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text('Confirm your Shopping to Save', style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.w600, color: Color(0xFFe9813f)),),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          
+                          children: const [
+                            Icon(Icons.shopping_cart, color: goldColor,),
+                            SizedBox(width: 16.0,),
+                            Text('Confirm Shopping\nto View Savings', style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.w600, color:goldColor), textAlign: TextAlign.center,),
+                          ],
+                        ), // Color(0xFFe9813f)),),
                         // child: Text('Start Saving from Menu Tab', style: TextStyle(fontSize: 16.0,color: Color(0xFFe9813f)),),
                       ),
 
@@ -320,9 +328,9 @@ class _SavePanelState extends State<SavePanel> {
   }
 
   populateBydate() {
-    print(widget.saveSpan['bydate']);
-    print(widget.saveSpan['bydate'][0]);
-    print(widget.saveSpan['bydate'][0]['store']);
+    // print(widget.saveSpan['bydate']);
+    // print(widget.saveSpan['bydate'][0]);
+    // print(widget.saveSpan['bydate'][0]['store']);
     bydate = widget.saveSpan['bydate'];
   }
 

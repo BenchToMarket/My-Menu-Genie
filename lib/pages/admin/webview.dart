@@ -4,6 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 class MyWebView extends StatelessWidget {
   final String title;
   final String selectedUrl;
@@ -41,6 +43,7 @@ class MyWebView extends StatelessWidget {
         onWebViewCreated: (WebViewController controller) {
           _controller = controller;
         },
+        
 
         onPageFinished: null,
 

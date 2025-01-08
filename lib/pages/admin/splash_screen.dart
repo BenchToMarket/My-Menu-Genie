@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +18,8 @@ import '../user/user_signup.dart';
 import 'phoenix.dart';
 import 'savory_api.dart';
 import 'force_action.dart';
+import '../user/user_benefits.dart';
+import 'more_help.dart';
 
 
 import 'package:package_info_plus/package_info_plus.dart';
@@ -42,7 +46,12 @@ class _SplashScreenState extends State<SplashScreen> {
   String sh = '';
   final HttpService httpSavory = HttpService();
 
+  bool _hasConnect = true;
+  final double _sliderMargin = 90.0;
+  bool _sliderBadConnect = false;
+
   Map<String, dynamic> userVerify = {};
+  String updateNeeded = 'good';
 
   @override
   void initState() {
@@ -52,29 +61,89 @@ class _SplashScreenState extends State<SplashScreen> {
     // once user is logged in, they can't change users (for now)
 
     if (isTest == true) {
-      //testNoUser(); // this skips loading of SharedPreferences
+      // testNoUser(); // this skips loading of SharedPreferences
       loginUser(); // this will load defined SharedPreferences
     }
 
-    getAppVersion();
+    checkConnectionInBackground();
+    startApp();
 
+  }
+
+  void startApp() {
+  
+    getAppVersion();
     startTimer();
+  }
+
+  void checkConnectionInBackground() {
+    // Run the connection check in the background
+    Future.microtask(() async {
+      _hasConnect = await httpSavory.checkConnection();
+
+      if (!_hasConnect) {
+        // Handle the connection failure (e.g., show a message)
+        Future.delayed(const Duration(seconds: 2), () {
+          setState(() {
+              _sliderBadConnect = true; 
+          });
+        });
+      }
+    });
+  }
+
+  
+  shopCancelConnect() {
+    setState(() {
+      _sliderBadConnect = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     my_screenWidth = MediaQuery.of(context).size.width;
     my_screenHeight = MediaQuery.of(context).size.height;
+    my_screenDisplay = MediaQuery.of(context).size.height -    // total height 
+      kToolbarHeight -                      // top AppBar height
+      MediaQuery.of(context).padding.top -  // top padding
+      kBottomNavigationBarHeight;            // BottomNavigationBar height
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-              // image: AssetImage("images/cardiac_pic.jpg"),
-              image: AssetImage("images/genie_female.jpg"),
-              fit: BoxFit.fitHeight),
-        ),
-      ),
+      body: Stack(
+        children: [
+            Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                    // image: AssetImage("images/cardiac_pic.jpg"),
+                    image: AssetImage("images/genie_female.jpg"),
+                    fit: BoxFit.fitHeight),
+              ),
+            ),
+
+            // Bad Connection
+            AnimatedPositioned(
+              top: (my_screenHeight - my_screenDisplay) / 2,  //, 100.0,
+              left: _sliderBadConnect ? (_sliderMargin / 2) : (my_screenWidth + 80.0),
+              duration: const Duration(milliseconds: 500),
+              child: SliderBadConnection(
+                sliderMargin: _sliderMargin,
+                fromPage: 'splash',
+                cancelConnect: shopCancelConnect,
+              )
+            )
+
+      ],)
+
+
+
+      // body: Container(
+      //   decoration: const BoxDecoration(
+      //     image: DecorationImage(
+      //         // image: AssetImage("images/cardiac_pic.jpg"),
+      //         image: AssetImage("images/genie_female.jpg"),
+      //         fit: BoxFit.fitHeight),
+      //   ),
+      // ),
     );
   }
 
@@ -88,10 +157,13 @@ class _SplashScreenState extends State<SplashScreen> {
     // https://stackoverflow.com/questions/60220216/flutter-how-to-store-list-of-int-in-shared-preference
     // real user for testing
     prefs.setBool("isLoggedIn", true); // set to false to test Login
-    prefs.setInt("currentUserID",52);  
-    prefs.setInt("userServeSize",2);  
+    prefs.setInt("currentUserID",1);    // 3-jessica
+    prefs.setInt("userServeSize",4);  
     prefs.setInt('appVersion', 1);
+    prefs.setInt('userPlan', 2);
     // prefs.setStringList('store_list', ["1"]);
+    prefs.setString('seenInfo', '0222222222');      // take to 0 if we never show again
+    // seenInfo [0]-menu_create, [1]-shop-locked
     
 
 
@@ -109,6 +181,18 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void startTimer() {
     // verifyUser 
+
+    print('-----   in start timer  ------');
+
+    Future.delayed(const Duration(seconds: 2), () {
+      isUserLogedIn();
+    });
+  }
+
+  bypassedUpgrade() {
+
+    updateNeeded = 'bypassed';
+
     Future.delayed(const Duration(seconds: 2), () {
       isUserLogedIn();
     });
@@ -171,41 +255,60 @@ class _SplashScreenState extends State<SplashScreen> {
       // version 2.0.1 - will be 2000001 in server
       prefs.setInt("appVersion", cpAppVersion);
       if (prefs.getInt('currentUserID') != null) {
-        sendUpdatedVersionToServer(prefs.getInt('currentUserID')!);
+        updateNeeded = await sendUpdatedVersionToServer(prefs.getInt('currentUserID')!, 'update');
+      } else {
+        updateNeeded = await sendUpdatedVersionToServer(prefs.getInt('currentUserID')!, 'same');
       }
     } else {
       // we send cpAppVersion if we had an update
       if (cpAppVersion != prefs.getInt('appVersion')) {
         prefs.setInt("appVersion", cpAppVersion);
-        sendUpdatedVersionToServer(prefs.getInt('currentUserID')!);
+        updateNeeded = await sendUpdatedVersionToServer(prefs.getInt('currentUserID')!, 'update');    
+      } else {
+        updateNeeded = await sendUpdatedVersionToServer(prefs.getInt('currentUserID')!, 'same');    
       }
     }
+
+    // was on cardiac peak like this?
+    // if (prefs?.getString('seenInfo') == null) {       // ** this is when user upgrades
+    //   prefs?.setString('seenInfo', '0002222222');     // 0-onboard, 1-intro, 2-goal-slider, 
+    // }
 
   }
 
 
-  Future<bool> sendUpdatedVersionToServer(int userId) async {
+  Future<String> sendUpdatedVersionToServer(int userId, String sendingUpdate) async {
     // cpAppVersion is a global variable, so no need to send here
 
     print('------   sending update version ----');
 
-    bool success = httpSavory.sendAppVersionUpdates(userId, cpAppVersion);
+    Map<String, dynamic> result = {};
 
-    return success;
+    result = await httpSavory.sendAppVersionUpdates(userId, cpAppVersion, sendingUpdate);
+    // options are: good, force (must update), request (ask to update)
+
+    print('-- result from update api -- ' + result['result'].toString());
+    updateNeeded = result['result'];
+
+    return result['result'];
   }
 
 
   void isUserLogedIn() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
+    //  updateNeeded - // options are: good, force (must update), request (ask to update)
+    print('---------      in  is user logged in   --------');
+
     if (prefs.getBool('isLoggedIn') == null) {
       prefs.setBool("isLoggedIn", false);
     }
 
 
+
     var status = prefs.getBool('isLoggedIn'); // ?? false;
-    // print('------  isUserLogedIn  -------');
-    // print(status);
+    print('------  isUserLogedIn  -------');
+    print(status);
     // print(prefs.getInt("currentUserID"));
     // print(prefs.getInt("currentUserID"));
     // print(prefs.getString("currentUserName"));
@@ -218,10 +321,29 @@ class _SplashScreenState extends State<SplashScreen> {
     if (status! == true) {
       // curr_user = await userService.PopulateCurrentUser();
       // print('222222222222222222222222222');
+
+      // print('444444444444444444444444444444444');
+      // print(updateNeeded);
+      
+      if (updateNeeded == 'force' || updateNeeded == 'request') {
+        print('***   Force User to Update ****');
+        Navigator.of(context).push(PageRouteBuilder(
+          opaque: false,
+          pageBuilder: (BuildContext context, _, __) =>
+              ForceUpgrade(
+                upgradeNeeded: updateNeeded,
+                bypassUpgradeClicked: bypassedUpgrade,
+                )));
+        return;
+      }
+
+
       currUser = CurrentUser(
         userID: prefs.getInt("currentUserID")!,
         userIDString: prefs.getInt("currentUserID").toString(),
         userServeSize: prefs.getInt("userServeSize")!,
+        userPlan: prefs.getInt("userPlan")!,
+        seenInfo: prefs.getString("seenInfo")!,
       );
 
       // print('33333333333333333333333333333');
@@ -231,7 +353,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
       // this is on in Cardiac Peak - but should never be null - so commented out
       if (currUser.userID == null || currUser.userIDString == null) {
-        Navigator.pushReplacement( context, MaterialPageRoute(builder: (context) => UserSignup()));
+        // Navigator.pushReplacement( context, MaterialPageRoute(builder: (context) => UserSignup()));
+        Navigator.pushReplacement( context, MaterialPageRoute(builder: (context) => UserBenefits()));
         return;
       }
 
@@ -241,6 +364,20 @@ class _SplashScreenState extends State<SplashScreen> {
       }
 
       userVerify = await httpSavory.getVerifiedUser(currUser.userID, cpAppVersion);   // sending appVersion in case user is not logged into an old version
+      if (userVerify['error'] == 'noconnection'){
+        print('********  no connection ******');
+        // repeating below code so we can keep const - since it is the nav bar
+        // ignore: use_build_context_synchronously
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const MyBottomNavigationBar(noInternetConnection: true,),
+            transitionDuration: const Duration(seconds: 3),
+            transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
+          ),
+        );
+      }
+
 
       if (userVerify['force_action'] == 'upgrade' || userVerify['force_action'] == 'stop') {
         // go to force upgrade screen
@@ -266,7 +403,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const MyBottomNavigationBar(),
+          pageBuilder: (_, __, ___) => const MyBottomNavigationBar(noInternetConnection: false,),
           transitionDuration: const Duration(seconds: 3),
           transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
         ),
@@ -283,7 +420,8 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => UserSignup(),
+            // pageBuilder: (_, __, ___) => UserSignup(),
+            pageBuilder: (_, __, ___) => UserBenefits(),
             transitionDuration: const Duration(seconds: 2),
             transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
           ),
@@ -304,4 +442,96 @@ class NewVersion {
       // "last_login": last_login,
     };
   }
+}
+
+class ForceUpgrade extends StatelessWidget {
+
+final String upgradeNeeded;
+final VoidCallback? bypassUpgradeClicked;
+
+const ForceUpgrade({required this.upgradeNeeded, required this.bypassUpgradeClicked, Key? key}) : super(key: key);
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+  backgroundColor: Colors.white.withOpacity(0.85), // this is the main reason of transparency at next screen. I am ignoring rest implementation but what i have achieved is you can see.
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Center(child: Text(upgradeNeeded == 'force' ? 'Upgrade Reuqired' : 'Upgrade Suggested', style: TextStyle(color: Colors.white))),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text((upgradeNeeded == 'force') ? "Upgrade Required" : 'Upgrade Suggested', style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(0.0),
+            child: Container(
+              margin: EdgeInsets.all(50.0),
+              child: Text(
+                upgradeNeeded == 'force' 
+                  ? 'We have made Major Updates to how our App funcitons. As update is required to use. \n\nFor support, email support@MenuGenie.ai' 
+                  : 'We have made Updates to how our App funcitons. An App Update is preferred, but not required. You may experience some odd functionality. \n\nFor support, email support@MenuGenie.ai', 
+                style: TextStyle(fontSize: 18.0),)),
+          ),
+
+          Padding(
+              padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 30.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary:  blueColor, // background
+                  onPrimary: Colors.black, // foreground
+                  padding: EdgeInsets.all(16.0),    
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),) 
+                ),
+                onPressed: () {
+
+                  try {
+                    String link_google = 'https://play.google.com/store/apps/details?id=ai.menu_genie';
+                    launchUrl(Uri.parse(link_google), mode: LaunchMode.externalApplication);
+                  } catch (err) {
+                    if (kDebugMode) { print('WTF - $err'); }
+                  }
+
+                  Future.delayed(const Duration(seconds: 2), () {
+                    SystemNavigator.pop();
+                  });
+                  
+                },
+                child:  Text('Upgrade on Google Play', style: TextStyle(fontSize: 18.0)),
+            ),
+          ),
+
+
+          (upgradeNeeded == 'request')
+            ?
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: FlatButton(
+                  // color: Colors.teal[400],
+                  onPressed: () {
+                    bypassUpgradeClicked!();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    'Keep Current Version',
+                    style: TextStyle(
+                      fontSize: 18.0,
+                      color: blueColor,
+                    ),
+                  ),
+                ),
+              )
+            : Container()
+
+
+        ],
+      ),
+  );
+ }
 }
