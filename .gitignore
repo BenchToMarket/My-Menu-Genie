@@ -33,6 +33,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# virtual env
+env-menu/
+
 # Web related
 lib/generated_plugin_registrant.dart
 lib/pages/admin/phoenix.dart
