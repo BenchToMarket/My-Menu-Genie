@@ -1,9 +1,51 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.my_menu_genie">
+    package="ai.menu_genie">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" /> -->
+    
+    <queries>
+		<!-- see: https://medium.com/androiddevelopers/package-visibility-in-android-11-cc857f221cd9 
+		https://stackoverflow.com/questions/65883844/flutter-url-launcher-is-not-launching-url-in-release-mode
+		https://stackoverflow.com/questions/63625023/flutter-url-launcher-unhandled-exception-could-not-launch-youtube-url-caused-b
+		https://github.com/flutter/flutter/issues/90099	
+		-->
+		
+		<!-- I added below 1 line in intent b/c one site, but removed b/c i dont see it but the one -->
+		<!-- <category android:name="android.intent.category.BROWSABLE" /> -->
+		<!-- Specific apps you interact with, eg: -->
+		<!-- <package android:name="com.example.store" />
+		<package android:name="com.example.service" /> -->
+		<!-- If your app opens https URLs -->
+		<intent>
+			<action android:name="android.intent.action.VIEW" />
+			<data android:scheme="https" />
+			<!-- <data android:scheme="intent" /> got error - only my guess on code -->
+		</intent>
+        
+        <!-- <intent>
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:schemke="intent" />
+            <data android:host="play.google.com" android:scheme="intent" />
+        </intent> -->
+		
+		<intent>
+			<action android:name="android.intent.action.TTS_SERVICE" />
+		</intent>
+   
+        <!-- If your application checks for inAppBrowserView launch mode support 
+        from: https://pub.dev/packages/url_launcher
+        -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+	  
+    </queries>
+
    <application
-        android:label="my_menu_genie"
+        android:label="Menu Genie AI"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+		
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -23,6 +65,37 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <!-- <action android:name="android.support.customtabs.action.CustomTabsService" /> -->
+            </intent-filter>
+
+
+            <!-- did not work for unknown_url_scheme
+            from https://stackoverflow.com/questions/35442592/android-custom-url-scheme-refuses-to-work-how-to-navigate-back-to-android-app%C2%A0 -->
+            <!-- android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter android:label="...">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="testapp" />
+                <data android:host="app" /> 
+                <data android:host="app.open" />
+            </intent-filter> -->
+            <!-- <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter> -->
+            <!-- <data android:host="play.google.com" android:scheme="intent" /> -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- <data android:scheme="intent" />
+                <data android:host="play.google.com" /> -->
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

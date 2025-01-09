@@ -1,6 +1,6 @@
 {
-    "name": "my_menu_genie",
-    "short_name": "my_menu_genie",
+    "name": "menu_genie",
+    "short_name": "menu_genie",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
